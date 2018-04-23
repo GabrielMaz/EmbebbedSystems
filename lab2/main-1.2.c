@@ -548,7 +548,6 @@ void printCharInbin(char data) {
     printf("\n\n");
 }
 
-
 cofunc void printEvents() {
     struct Event event;
     int i;
@@ -573,6 +572,7 @@ cofunc void printEvents() {
 }
 
 int validateEventLeds(char leds) {
+    char aux;
     int i, length, result;
 
     i = 0;
@@ -585,21 +585,17 @@ int validateEventLeds(char leds) {
         i++;
     }
 
-    if (length > 8) {
+    if (length >= 8) {
         return 0;
     }
-    i = 0;
 
-    while (*(data+i) != '\0') {
+    aux = leds;
+    for (i = 0; i < 8; i++) {
+        printf("%d", );
 
-        // get value of string
-        *(data + i) = *(data + i) - 0x30;       //0x30 hex = 48 ascii = 0
-
-        if (*(data + i != 1 | *(data + i != 0)) {
+        if (!!((aux << i) & 0x80) != 1 & !!((aux << i) & 0x80) != 0)) {
             return 0;
         }
-
-        i++;
     }
 
     return result;
