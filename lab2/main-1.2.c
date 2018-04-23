@@ -23,6 +23,7 @@ typedef struct Event {
 int current_state;
 int MAX_NUMBER_EVENTS;
 struct Event events[5];
+int events_availabe;
 
 // ---------------------------------- SYSTEM ----------------------------------
 void init();
@@ -52,14 +53,15 @@ int validateDate();
 void setClock(unsigned long time_in_sec);
 
 // ---------------------------------- EVENT ----------------------------------
+cofunc void printEvents();
 cofunc void createEventUi();
 cofunc void createEvent(int leds, int info, unsigned long time);
 void insertEvent(struct Event event);
 cofunc void getEventName(int* name_int);
 cofunc void getEventLeds(int* leds_int);
 void printCharInbin(char data);
-cofunc void printEvents();
 int validateEventLeds(char leds);
+cofunc void deleteEventUI();
 
 // Main loop function
 void main () {
@@ -93,11 +95,22 @@ void main () {
                     break;
 
                 case (ADD_EVENT):
-                    wfd createEventUi();
+                    if (events_availabe < 5) {
+                        wfd createEventUi();
+                    } else {
+                        CLEAR_SCREEN();
+                        printf("No hay espacio para mas eventos");
+                    }
                     setState(MENU);
                     break;
 
                 case (DELETE_EVENT):
+                    if (events_availabe > 0) {
+                        wfd void deleteEventUI()
+                    } else {
+                        CLEAR_SCREEN();
+                        printf("No hay eventos para eliminar");
+                    }
                     setState(MENU);
                     break;
             }
@@ -109,6 +122,7 @@ void main () {
 
 void init() {
     MAX_NUMBER_EVENTS = 7;
+    events_availabe = 7;
     initEvents();
     setState(MENU);
 }
@@ -458,6 +472,29 @@ void setClock(unsigned long time_in_sec) {
 
 // ---------------------------------- EVENT ----------------------------------
 
+cofunc void printEvents() {
+    struct Event event;
+    int i;
+
+    CLEAR_SCREEN();
+
+    printf("Listado de eventos:\n\n");
+
+    for (i = 0; i < MAX_NUMBER_EVENTS; i++){
+        event = events[i];
+
+        if (event.id != -1) {
+            printf("*************** %d ***************\n\n", i+1);
+            printf("Nombre: %c\n\n", event.name);
+            printf("Leds: ");
+            printCharInbin(event.param);
+            displayHourUI(event.time);
+        }
+    }
+
+    printf("\n\n");
+}
+
 cofunc void createEventUi() {
     char name, leds;
     unsigned long time_in_sec;
@@ -473,7 +510,7 @@ cofunc void createEventUi() {
     // check if entered value belongs to the possible values
     if (!validateEventLeds(leds)) {
         CLEAR_SCREEN();
-        printf("Error: por favor ingrese una valida\n\n");
+        printf("Por favor ingrese un dato valido\n\n");
         abort;
     }
 
@@ -498,21 +535,15 @@ cofunc void createEvent(char name, char leds, unsigned long time) {
 }
 
 void insertEvent(struct Event event) {
-    int i, inserted;
-
-    inserted = 0;
+    int i;
 
     for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
         if (events[i].id == -1) {
             event.id = i;
             events[i] = event;
-            inserted = 1;
+            events_availabe -= 1;
             break;
         }
-    }
-
-    if (!inserted) {
-        printf("No hay espacio para mas eventos");
     }
 }
 
@@ -548,29 +579,6 @@ void printCharInbin(char data) {
     printf("\n\n");
 }
 
-cofunc void printEvents() {
-    struct Event event;
-    int i;
-
-    CLEAR_SCREEN();
-
-    printf("Listado de eventos:\n\n");
-
-    for (i = 0; i < MAX_NUMBER_EVENTS; i++){
-        event = events[i];
-
-        if (event.id != -1) {
-            printf("*************** %d ***************\n\n", i);
-            printf("Nombre: %c\n\n", event.name);
-            printf("Leds: ");
-            printCharInbin(event.param);
-            displayHourUI(event.time);
-        }
-    }
-
-    printf("\n\n");
-}
-
 int validateEventLeds(char leds) {
     char aux;
     int i, length, result;
@@ -599,4 +607,29 @@ int validateEventLeds(char leds) {
     }
 
     return result;
+}
+
+cofunc void deleteEventUI() {
+    char data[4];
+    int option, i;
+
+    printf("Ingrese numero de evento a eliminar: ")
+    waitfor(getswf(data));
+
+    option = converter(data) - 1;
+
+    if (option < 0 | option > 5) {
+        printf("Por favor ingrese un dato valido\n\n");
+        abort;
+    }
+
+    for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
+        if (i == option) {
+            events[i].id = -1;
+            events_availabe += 1;
+        }
+    }
+
+    CLEAR_SCREEN();
+    printf("Se elimino correctamente el evento")
 }
