@@ -9,8 +9,8 @@ enum STATE {
     DISPLAY_HOUR = 1,
     INPUT_HOUR = 2,
     LIST_EVENTS = 3,
-    DELETE_EVENT = 4,
-    ADD_EVENT = 5
+    ADD_EVENT = 4,
+    DELETE_EVENT = 5
 };
 
 typedef struct Event {
@@ -140,7 +140,7 @@ void initEvents(){
     struct Event event;
 
     for (i = 0; i < MAX_NUMBER_EVENTS; i++){
-        event.id = -1;
+        event.array_postion = -1;
         events[i] = event;
     }
 }
@@ -483,7 +483,7 @@ cofunc void printEvents() {
     for (i = 0; i < MAX_NUMBER_EVENTS; i++){
         event = events[i];
 
-        if (event.id != -1) {
+        if (event.array_postion != -1) {
             printf("*************** %d ***************\n\n", i+1);
             printf("Nombre: %c\n\n", event.name);
             printf("Leds: ");
@@ -538,8 +538,8 @@ void insertEvent(struct Event event) {
     int i;
 
     for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
-        if (events[i].id == -1) {
-            event.id = i;
+        if (events[i].array_postion == -1) {
+            event.array_postion = i;
             events[i] = event;
             events_availabe -= 1;
             break;
@@ -625,7 +625,7 @@ cofunc void deleteEventUI() {
 
     for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
         if (i == option) {
-            events[i].id = -1;
+            events[i].array_postion = -1;
             events_availabe += 1;
         }
     }
