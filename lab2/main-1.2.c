@@ -24,13 +24,13 @@ int current_state;
 int MAX_NUMBER_EVENTS;
 struct Event events[5];
 
-                // SYSTEM
+// ---------------------------------- SYSTEM ----------------------------------
 void init();
 enum STATE getState();
 void setState(enum STATE newState);
 void initEvents();
 
-                // MENU
+// ---------------------------------- MENU ----------------------------------
 void menuUI();
 cofunc void optionSelected();
 int converter(char *data);
@@ -38,7 +38,7 @@ int converterBin(char *data);
 int multipleOfTen(int multiple);
 int multipleOfTwo(int multiple);
 
-                // DATE AND TIME
+// ---------------------------------- DATE AND TIME ----------------------------------
 unsigned long getRtcTime();
 void displayHourUI(unsigned long time_in_sec);
 void inputHourUI();
@@ -47,7 +47,7 @@ cofunc void inputHourUI();
 cofunc void askTimeHourData(int ask_time, int ask_date);
 cofunc void askForDateTime(unsigned long* time_in_sec);
 
-                // EVENT
+// ---------------------------------- EVENT ----------------------------------
 cofunc void handleCommandInput(int* command_int);
 cofunc void handleParamInput(int* param_int);
 cofunc void createEvent(int command, int params, unsigned long time);
@@ -57,8 +57,7 @@ void insertEvent(struct Event event);
 
 // Main loop function
 void main () {
-    int input;
-    int data_valid;
+    int input, data_valid;
     unsigned long time;
 
     init();
@@ -129,7 +128,7 @@ void init() {
 
 void menuUI() {
     printf("Menu: \n\n1 - Mostrar hora \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n");
-	 printf("Seleccione una opcion: ");
+	printf("Seleccione una opcion: ");
 }
 
 cofunc void optionSelected(){
@@ -173,9 +172,7 @@ cofunc void optionSelected(){
 }
 
 int converter(char *data) {
-    int i;
-    int length;
-    int result;
+    int i, length, result;
 
     i = 0;
     length = 0;
@@ -204,9 +201,7 @@ int converter(char *data) {
 }
 
 int converterBin(char *data) {
-    int i;
-    int length;
-    int result;
+    int i, length, result;
 
     i = 0;
     length = 0;
@@ -235,8 +230,7 @@ int converterBin(char *data) {
 }
 
 int multipleOfTen(int multiple) {
-    int result;
-    int i;
+    int i, result;
 
     result = 1;
 
@@ -248,8 +242,7 @@ int multipleOfTen(int multiple) {
 }
 
 int multipleOfTwo(int multiple) {
-    int result;
-    int i;
+    int i, result;
 
     result = 1;
 
@@ -553,6 +546,7 @@ cofunc void handleParamInput(int* param_int){
 
 cofunc void createEvent(int command, int params, unsigned long time){
     struct Event event;
+
     event.command = command;
     event.param = params;
     event.time = time;
@@ -563,6 +557,7 @@ cofunc void createEventUi(){
     int command;
     int params;
     unsigned long time;
+
     CLEAR_SCREEN();
     wfd handleCommandInput(&command);
     // check if entered value belongs to the possible values
