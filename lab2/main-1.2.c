@@ -92,12 +92,12 @@ void main () {
                     setState(MENU);
                     break;
 
-                case (DELETE_EVENT):
+                case (ADD_EVENT):
+                    wfd createEventUi();
                     setState(MENU);
                     break;
 
-                case (ADD_EVENT):
-                    wfd createEventUi();
+                case (DELETE_EVENT):
                     setState(MENU);
                     break;
             }
