@@ -1,4 +1,5 @@
 #define CLEAR_SCREEN() (printf(" \x1Bt"));
+#define MAX_NUMBER_EVENTS 7
 
 enum ACTIONS {
     SET_LED_STATUS
@@ -21,9 +22,8 @@ typedef struct Event {
 };
 
 int current_state;
-int MAX_NUMBER_EVENTS;
-struct Event events[5];
-int events_availabe;
+struct Event events[MAX_NUMBER_EVENTS];
+int events_actived;
 
 // ---------------------------------- SYSTEM ----------------------------------
 void init();
@@ -44,23 +44,23 @@ unsigned long getRtcTime();
 void displayHourUI(unsigned long time_in_sec);
 void inputHourUI();
 cofunc void setDate();
-cofunc void askTimeHourData(int ask_time, int ask_date);
+cofunc void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date);
 cofunc void askForDateTime(unsigned long* time_in_sec);
 cofunc void getTime(struct tm *time_pointer);
-int validateTime();
+int validateTime(int hour_int, int min_int, int sec_int);
 cofunc void getDate(struct tm *time_pointer);
-int validateDate();
-void setClock(unsigned long time_in_sec);
+int validateDate(int day_int, int month_int, int year_int);
+void setClock(unsigned long *time_in_sec, struct tm *time_pointer);
 
 // ---------------------------------- EVENT ----------------------------------
 cofunc void printEvents();
 cofunc void createEventUi();
-cofunc void createEvent(int leds, int info, unsigned long time);
+cofunc void createEvent(char name, char leds, unsigned long time);
 void insertEvent(struct Event event);
 cofunc void getEventName(int* name_int);
-cofunc void getEventLeds(int* leds_int);
+cofunc void getEventLeds(int* leds_int, int *validate);
 void printCharInbin(char data);
-int validateEventLeds(char leds);
+int validateEventLeds(char *leds);
 cofunc void deleteEventUI();
 
 // Main loop function
@@ -95,21 +95,22 @@ void main () {
                     break;
 
                 case (ADD_EVENT):
-                    if (events_availabe < 5) {
+                    if (events_actived < MAX_NUMBER_EVENTS) {
                         wfd createEventUi();
                     } else {
                         CLEAR_SCREEN();
-                        printf("No hay espacio para mas eventos");
+                        printf("No hay espacio para mas eventos\n\n");
                     }
                     setState(MENU);
                     break;
 
                 case (DELETE_EVENT):
-                    if (events_availabe > 0) {
-                        wfd void deleteEventUI()
+                    wfd printEvents();
+                    if (events_actived > 0) {
+                        wfd deleteEventUI();
                     } else {
                         CLEAR_SCREEN();
-                        printf("No hay eventos para eliminar");
+                        printf("No hay eventos para eliminar\n\n");
                     }
                     setState(MENU);
                     break;
@@ -121,8 +122,7 @@ void main () {
 // ---------------------------------- SYSTEM ----------------------------------
 
 void init() {
-    MAX_NUMBER_EVENTS = 7;
-    events_availabe = 7;
+    events_actived = 0;
     initEvents();
     setState(MENU);
 }
@@ -181,7 +181,6 @@ cofunc void optionSelected(){
 
         case 5:
             setState(DELETE_EVENT);
-            printf("DELETE_EVENT\n");
             break;
 
         default:
@@ -304,8 +303,10 @@ void inputHourUI() {
 
 cofunc void setDate() {
     unsigned long time_in_sec;
-
+    struct tm time, *time_pointer;
     char data[4];
+
+    time_pointer = &time;
 
     waitfor(getswf(data));
 
@@ -313,15 +314,15 @@ cofunc void setDate() {
 
     switch(data[0]) {
         case 1:
-            wfd askTimeHourData(&time_in_sec, 1, 0);
+            wfd askTimeHourData(&time_in_sec, time_pointer, 1, 0);
             break;
 
         case 2:
-            wfd askTimeHourData(&time_in_sec, 0, 1);
+            wfd askTimeHourData(&time_in_sec, time_pointer, 0, 1);
             break;
 
         case 3:
-            wfd askTimeHourData(&time_in_sec, 1, 1);
+            wfd askTimeHourData(&time_in_sec, time_pointer, 1, 1);
             break;
 
         case 4:
@@ -336,14 +337,10 @@ cofunc void setDate() {
             abort;
     }
 
-    setClock(time_in_sec);
+    setClock(&time_in_sec, time_pointer);
 }
 
-cofunc void askTimeHourData(unsigned long *time_in_sec, int ask_time, int ask_date) {
-    struct tm time, *time_pointer;
-    //int validate, *validate_pointer;
-    
-    time_pointer = &time;
+cofunc void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date) {
 
     printf("\n");
 
@@ -378,10 +375,10 @@ cofunc void getTime(struct tm *time_pointer) {
     min_int = converter(min);
     sec_int = converter(sec);
 
-    if (validateTime()) {
-        (&(*time_pointer)).tm_hour = hour_int;
-        (&(*time_pointer)).tm_min = min_int;
-        (&(*time_pointer)).tm_sec = sec_int;
+    if (validateTime(hour_int, min_int, sec_int)) {
+        (*time_pointer).tm_hour = hour_int;
+        (*time_pointer).tm_min = min_int;
+        (*time_pointer).tm_sec = sec_int;
     } else {
         CLEAR_SCREEN();
         printf ("Datos de hora invalidos\n\n");
@@ -389,7 +386,7 @@ cofunc void getTime(struct tm *time_pointer) {
     }
 }
 
-int validateTime() {
+int validateTime(int hour_int, int min_int, int sec_int) {
     int validate;
 
     validate = 1;
@@ -428,10 +425,10 @@ cofunc void getDate(struct tm *time_pointer) {
     month_int = converter(month);
     year_int = converter(year);
 
-    if (validateDate()) {
-        (&(*time_pointer)).tm_mday = day_int;
-        (&(*time_pointer)).tm_mon = month_int;
-        (&(*time_pointer)).tm_year = year_int - 1900;
+    if (validateDate(day_int, month_int, year_int)) {
+        (*time_pointer).tm_mday = day_int;
+        (*time_pointer).tm_mon = month_int;
+        (*time_pointer).tm_year = year_int - 1900;
     } else {
             CLEAR_SCREEN();
         printf ("Datos de fecha invalidos\n\n");
@@ -439,7 +436,7 @@ cofunc void getDate(struct tm *time_pointer) {
     }
 }
 
-int validateDate() {
+int validateDate(int day_int, int month_int, int year_int) {
     int validate;
 
     validate = 1;
@@ -457,16 +454,17 @@ int validateDate() {
     return validate;
 }
 
-void setClock(unsigned long time_in_sec) {
+void setClock(unsigned long *time_in_sec, struct tm *time_pointer) {
+
     // Set the RTC time
     write_rtc(time_in_sec);
 
-    
+
     *time_in_sec = mktime(time_pointer);
 
     // Update MS_TIMER and SEC_TIMER
-    MS_TIMER = time_in_sec*1000;         // Is in miliseconds
-    SEC_TIMER = time_in_sec;
+    MS_TIMER = (*time_in_sec)*1000;         // Is in miliseconds
+    SEC_TIMER = (*time_in_sec);
     CLEAR_SCREEN();
 }
 
@@ -487,7 +485,7 @@ cofunc void printEvents() {
             printf("*************** %d ***************\n\n", i+1);
             printf("Nombre: %c\n\n", event.name);
             printf("Leds: ");
-            printCharInbin(event.param);
+            printCharInbin(event.leds);
             displayHourUI(event.time);
         }
     }
@@ -498,6 +496,10 @@ cofunc void printEvents() {
 cofunc void createEventUi() {
     char name, leds;
     unsigned long time_in_sec;
+    struct tm time, *time_pointer;
+    int leds_validate;
+
+    time_pointer = &time;
 
     CLEAR_SCREEN();
 
@@ -506,21 +508,29 @@ cofunc void createEventUi() {
     // TODO verify
 
     // Ask for leds value
-    wfd getEventLeds(&leds);
+    wfd getEventLeds(&leds, &leds_validate);
+    // Check if length value is 8
+    if (!leds_validate){
+        CLEAR_SCREEN();
+        printf("Por favor un largo de 8 caracteres\n\n");
+        abort;
+    }
     // check if entered value belongs to the possible values
-    if (!validateEventLeds(leds)) {
+    if (!validateEventLeds(&leds)) {
         CLEAR_SCREEN();
         printf("Por favor ingrese un dato valido\n\n");
         abort;
     }
 
+
     // Ask for time and date
     printf("\n\n");
-    wfd askTimeHourData(&time_int_sec, 1, 1);
+    wfd askTimeHourData(&time_in_sec, time_pointer, 1, 1);
 
     // Create the event
     wfd createEvent(name, leds, time_in_sec);
 
+    CLEAR_SCREEN();
     printf("Su evento fue agregado a la lista de eventos programados\n\n");
     setState(MENU);
 }
@@ -541,7 +551,7 @@ void insertEvent(struct Event event) {
         if (events[i].array_postion == -1) {
             event.array_postion = i;
             events[i] = event;
-            events_availabe -= 1;
+            events_actived += 1;
             break;
         }
     }
@@ -555,17 +565,22 @@ cofunc void getEventName(int* name_int) {
     // get name
     waitfor(getswf(name));
     *name_int = converter(name);
+
+    printf("\n\n");
 }
 
-cofunc void getEventLeds(int* leds_int) {
+cofunc void getEventLeds(int* leds_int, int *validate) {
     char leds[12];
 
-    // print message for user ux
     printf("Por favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: \n\n");
 
     waitfor(getswf(leds));
 
-    *leds_int = converterBin(leds);
+    *validate = converterBin(leds);
+
+    if (validate) {
+        *leds_int = converterBin(leds);
+    }
 }
 
 // Given a char print it as binary
@@ -579,29 +594,17 @@ void printCharInbin(char data) {
     printf("\n\n");
 }
 
-int validateEventLeds(char leds) {
+int validateEventLeds(char *leds) {
     char aux;
-    int i, length, result;
+    int i, result;
 
     i = 0;
-    length = 0;
     result = 1;
 
-    // get the length of the string
-    while(*(data+i) != '\0'){
-        length++;
-        i++;
-    }
-
-    if (length >= 8) {
-        return 0;
-    }
-
-    aux = leds;
+    aux = *leds;
     for (i = 0; i < 8; i++) {
-        printf("%d", );
 
-        if (!!((aux << i) & 0x80) != 1 & !!((aux << i) & 0x80) != 0)) {
+        if (!!((aux << i) & 0x80) != 1 & !!((aux << i) & 0x80) != 0) {
             return 0;
         }
     }
@@ -613,7 +616,7 @@ cofunc void deleteEventUI() {
     char data[4];
     int option, i;
 
-    printf("Ingrese numero de evento a eliminar: ")
+    printf("Ingrese numero de evento a eliminar: ");
     waitfor(getswf(data));
 
     option = converter(data) - 1;
@@ -626,10 +629,10 @@ cofunc void deleteEventUI() {
     for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
         if (i == option) {
             events[i].array_postion = -1;
-            events_availabe += 1;
+            events_actived -= 1;
         }
     }
 
     CLEAR_SCREEN();
-    printf("Se elimino correctamente el evento")
+    printf("Se elimino correctamente el evento");
 }
