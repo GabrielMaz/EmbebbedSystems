@@ -16,7 +16,7 @@ enum STATE {
 
 typedef struct Event {
     int array_postion;
-    char name;
+    char name[11];
     char leds;
     unsigned long time;
 };
@@ -54,10 +54,11 @@ void setClock(unsigned long *time_in_sec, struct tm *time_pointer);
 
 // ---------------------------------- EVENT ----------------------------------
 cofunc void printEvents();
+void printEventName(char name[]);
 cofunc void createEventUi();
-cofunc void createEvent(char name, char leds, unsigned long time);
-void insertEvent(struct Event event);
-cofunc void getEventName(int* name_int);
+void insertEvent(struct Event *event);
+cofunc void getEventName(char name[]);
+char getStringName(char *name);
 cofunc void getEventLeds(int* leds_int, int *validate);
 void printCharInbin(char data);
 int validateEventLeds(char *leds);
@@ -483,7 +484,8 @@ cofunc void printEvents() {
 
         if (event.array_postion != -1) {
             printf("*************** %d ***************\n\n", i+1);
-            printf("Nombre: %c\n\n", event.name);
+            printEventName(event.name);
+            printf("\n");
             printf("Leds: ");
             printCharInbin(event.leds);
             displayHourUI(event.time);
@@ -493,80 +495,94 @@ cofunc void printEvents() {
     printf("\n\n");
 }
 
+void printEventName(char name[]) {
+    int i;
+
+    i = 0;
+
+    printf("Nombre: ");
+
+    while((name[i]) != '\0'){
+        printf("%c", name[i]);
+        i++;
+    }    
+}
+
 cofunc void createEventUi() {
-    char name, leds;
-    unsigned long time_in_sec;
+    struct Event event, *event_pointer;
     struct tm time, *time_pointer;
     int leds_validate;
 
     time_pointer = &time;
+    event_pointer = &event;
 
     CLEAR_SCREEN();
 
     // Ask for a event name
-    wfd getEventName(&name);
-    // TODO verify
+    wfd getEventName(&event.name);
+
+    printf("\n\n");
 
     // Ask for leds value
-    wfd getEventLeds(&leds, &leds_validate);
+    wfd getEventLeds(&event.leds, &leds_validate);
     // Check if length value is 8
     if (!leds_validate){
         CLEAR_SCREEN();
         printf("Por favor un largo de 8 caracteres\n\n");
         abort;
     }
+
     // check if entered value belongs to the possible values
-    if (!validateEventLeds(&leds)) {
+    if (!validateEventLeds(&event.leds)) {
         CLEAR_SCREEN();
         printf("Por favor ingrese un dato valido\n\n");
         abort;
     }
 
+    printf("\n\n");
 
     // Ask for time and date
-    printf("\n\n");
-    wfd askTimeHourData(&time_in_sec, time_pointer, 1, 1);
+    wfd askTimeHourData(&event.time, time_pointer, 1, 1);
 
-    // Create the event
-    wfd createEvent(name, leds, time_in_sec);
+    insertEvent(event_pointer);
 
     CLEAR_SCREEN();
     printf("Su evento fue agregado a la lista de eventos programados\n\n");
     setState(MENU);
 }
 
-cofunc void createEvent(char name, char leds, unsigned long time) {
-    struct Event event;
-
-    event.name = name;
-    event.leds = leds;
-    event.time = time;
-    insertEvent(event);
-}
-
-void insertEvent(struct Event event) {
+void insertEvent(struct Event *event) {
     int i;
 
     for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
         if (events[i].array_postion == -1) {
-            event.array_postion = i;
-            events[i] = event;
+            (*event).array_postion = i;
+            events[i] = (*event);
             events_actived += 1;
             break;
         }
     }
 }
 
-cofunc void getEventName(int* name_int) {
-    char name[4];
+cofunc void getEventName(char name[]) {
 
-    printf("Por favor ingrese un nombre para el evento: ");
+    printf("Por favor ingrese un nombre para el evento (maximo 10 caracteres) : ");
 
     // get name
     waitfor(getswf(name));
-    *name_int = converter(name);
+}
 
-    printf("\n\n");
+char getStringName(char *name) {
+    char result[11];
+    int i;
+
+    i = 0;
+
+    while (*(name+i) != '\0') {
+        result[i] = *(name+i);
+        i++;
+    }
+    return result;
 }
 
 cofunc void getEventLeds(int* leds_int, int *validate) {
