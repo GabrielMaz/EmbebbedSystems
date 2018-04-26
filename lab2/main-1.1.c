@@ -11,7 +11,7 @@ enum bitNumber {
 };
 
 void configurePorts();
-int getPortShadow(enum portName p_port);
+char getPortShadow(enum portName p_port);
 void setOutput(enum portName p_port, enum bitNumber p_pin, unsigned char p_state);
 
 
@@ -21,10 +21,10 @@ void main (){
     // main loop
     while (1){
         costate {
-            waitfor(DelayMS(800));
-            setOutput(PORT_E, getPortShadow(PORT_E), BIT_5, 1);
-            waitfor(DelayMS(400));
-            setOutput(PORT_E, getPortShadow(PORT_E), BIT_5, 0);
+            waitfor(DelayMs(800));
+            setOutput(PORT_E, BIT_5, 1);
+            waitfor(DelayMs(400));
+            setOutput(PORT_E, BIT_5, 0);
         }
     }
 }
@@ -37,7 +37,7 @@ void configurePorts(){
 /*
     Returns the shadows of the ports accepted in portName enum
 */
-int getPortShadow(enum portName p_port){
+char getPortShadow(enum portName p_port){
     switch(p_port){
         case PORT_E:
             return &PEDRShadow;
