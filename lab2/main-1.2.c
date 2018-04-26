@@ -17,7 +17,7 @@ enum STATE {
 typedef struct Event {
     int array_postion;
     char name[11];
-    char leds;
+    char leds[9];
     unsigned long time;
 };
 
@@ -54,12 +54,12 @@ void setClock(unsigned long *time_in_sec, struct tm *time_pointer);
 
 // ---------------------------------- EVENT ----------------------------------
 cofunc void printEvents();
-void printEventName(char name[]);
+void printEventData(char name[]);
 cofunc void createEventUi();
 void insertEvent(struct Event *event);
 cofunc void getEventName(char name[]);
 char getStringName(char *name);
-cofunc void getEventLeds(int* leds_int, int *validate);
+cofunc void getEventLeds(char *leds, int *validate);
 void printCharInbin(char data);
 int validateEventLeds(char *leds);
 cofunc void deleteEventUI();
@@ -483,27 +483,28 @@ cofunc void printEvents() {
         event = events[i];
 
         if (event.array_postion != -1) {
-            printf("*************** %d ***************\n\n", i+1);
-            printEventName(event.name);
-            printf("\n");
+            printf("-------- %d --------\n\n", i+1);
+            printf("Nombre: ");
+            printEventData(event.name);
+            printf("\n\n");
             printf("Leds: ");
-            printCharInbin(event.leds);
+            printEventData(event.leds);
+            printf("\n\n");
             displayHourUI(event.time);
+            printf("\n");
         }
     }
 
     printf("\n\n");
 }
 
-void printEventName(char name[]) {
+void printEventData(char data[]) {
     int i;
 
     i = 0;
 
-    printf("Nombre: ");
-
-    while((name[i]) != '\0'){
-        printf("%c", name[i]);
+    while((data[i]) != '\0'){
+        printf("%c", data[i]);
         i++;
     }    
 }
@@ -538,8 +539,6 @@ cofunc void createEventUi() {
         printf("Por favor ingrese un dato valido\n\n");
         abort;
     }
-
-    printf("\n\n");
 
     // Ask for time and date
     wfd askTimeHourData(&event.time, time_pointer, 1, 1);
@@ -585,18 +584,11 @@ char getStringName(char *name) {
     return result;
 }
 
-cofunc void getEventLeds(int* leds_int, int *validate) {
-    char leds[12];
+cofunc void getEventLeds(char* leds, int *validate) {
 
     printf("Por favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: \n\n");
 
     waitfor(getswf(leds));
-
-    *validate = converterBin(leds);
-
-    if (validate) {
-        *leds_int = converterBin(leds);
-    }
 }
 
 // Given a char print it as binary
@@ -650,5 +642,5 @@ cofunc void deleteEventUI() {
     }
 
     CLEAR_SCREEN();
-    printf("Se elimino correctamente el evento");
+    printf("Se elimino correctamente el evento\n\n");
 }
