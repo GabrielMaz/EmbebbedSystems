@@ -59,7 +59,7 @@ cofunc void createEventUi();
 void insertEvent(struct Event *event);
 cofunc void getEventName(char name[]);
 char getStringName(char *name);
-cofunc void getEventLeds(char *leds, int *validate);
+cofunc void getEventLeds(char *leds);
 void printCharInbin(char data);
 int validateEventLeds(char *leds);
 cofunc void deleteEventUI();
@@ -525,13 +525,7 @@ cofunc void createEventUi() {
     printf("\n\n");
 
     // Ask for leds value
-    wfd getEventLeds(&event.leds, &leds_validate);
-    // Check if length value is 8
-    if (!leds_validate){
-        CLEAR_SCREEN();
-        printf("Por favor un largo de 8 caracteres\n\n");
-        abort;
-    }
+    wfd getEventLeds(&event.leds);
 
     // check if entered value belongs to the possible values
     if (!validateEventLeds(&event.leds)) {
@@ -584,7 +578,7 @@ char getStringName(char *name) {
     return result;
 }
 
-cofunc void getEventLeds(char* leds, int *validate) {
+cofunc void getEventLeds(char* leds) {
 
     printf("Por favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: \n\n");
 
