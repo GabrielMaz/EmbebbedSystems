@@ -1,10 +1,7 @@
 #define PORT_INPUT 0
 #define PORT_OUTPUT 1
 #define CLEAR_SCREEN() (printf(" \x1Bt"));
-
-enum ACTIONS {
-    SET_LED_STATUS
-};
+#define MAX_NUMBER_EVENTS 7
 
 enum STATE {
     MENU = 0,
@@ -26,23 +23,23 @@ enum bitNumber {
 
 typedef struct Event {
     int array_postion;
-    char name;
-    char leds;
+    char name[11];
+    char leds[9];
     unsigned long time;
 };
 
 int current_state;
-int MAX_NUMBER_EVENTS;
-struct Event events[5];
-int events_availabe;
+struct Event events[MAX_NUMBER_EVENTS];
+int events_actived;
 
 // ---------------------------------- SYSTEM ----------------------------------
 void init();
 void configurePorts();
-int getPortShadow(enum portName p_port);
+char getPortShadow(enum portName p_port);
 enum STATE getState();
 void setState(enum STATE newState);
 void initEvents();
+void delayMS(int ms_delay);
 
 // ---------------------------------- MENU ----------------------------------
 void menuUI();
@@ -60,24 +57,28 @@ unsigned long getRtcTime();
 void displayHourUI(unsigned long time_in_sec);
 void inputHourUI();
 cofunc void setDate();
-cofunc void askTimeHourData(int ask_time, int ask_date);
+cofunc void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date);
 cofunc void askForDateTime(unsigned long* time_in_sec);
 cofunc void getTime(struct tm *time_pointer);
-int validateTime();
+int validateTime(int hour_int, int min_int, int sec_int);
 cofunc void getDate(struct tm *time_pointer);
-int validateDate();
-void setClock(unsigned long time_in_sec);
+int validateDate(int day_int, int month_int, int year_int);
+void setClock(unsigned long *time_in_sec, struct tm *time_pointer);
 
 // ---------------------------------- EVENT ----------------------------------
 cofunc void printEvents();
+void printEventData(char name[]);
 cofunc void createEventUi();
-cofunc void createEvent(int leds, int info, unsigned long time);
-void insertEvent(struct Event event);
-cofunc void getEventName(int* name_int);
-cofunc void getEventLeds(int* leds_int);
+void insertEvent(struct Event *event);
+cofunc void getEventName(char name[]);
+char getStringName(char *name);
+cofunc void getEventLeds(char *leds);
 void printCharInbin(char data);
-int validateEventLeds(char leds);
+int validateEventLeds(char *leds);
 cofunc void deleteEventUI();
+void deleteEvent(int option);
+void checkEvents();
+int turnOnLeds(char *leds);
 
 // Main loop function
 void main () {
@@ -90,10 +91,10 @@ void main () {
     while (1) {
         // 1.1
         costate {
-            waitfor(DelayMS(800));
-            setOutput(PORT_E, getPortShadow(PORT_E), BIT_5, 1);
-            waitfor(DelayMS(400));
-            setOutput(PORT_E, getPortShadow(PORT_E), BIT_5, 0);
+            waitfor(DelayMs(800));
+            setOutput(PORT_E, BIT_5, 1);
+            waitfor(DelayMs(400));
+            setOutput(PORT_E, BIT_5, 0);
         }
 
         // 1.2
@@ -120,21 +121,22 @@ void main () {
                     break;
 
                 case (ADD_EVENT):
-                    if (events_availabe < 5) {
+                    if (events_actived < MAX_NUMBER_EVENTS) {
                         wfd createEventUi();
                     } else {
                         CLEAR_SCREEN();
-                        printf("No hay espacio para mas eventos");
+                        printf("No hay espacio para mas eventos\n\n");
                     }
                     setState(MENU);
                     break;
 
                 case (DELETE_EVENT):
-                    if (events_availabe > 0) {
-                        wfd void deleteEventUI()
+                    wfd printEvents();
+                    if (events_actived > 0) {
+                        wfd deleteEventUI();
                     } else {
                         CLEAR_SCREEN();
-                        printf("No hay eventos para eliminar");
+                        printf("No hay eventos para eliminar\n\n");
                     }
                     setState(MENU);
                     break;
@@ -151,17 +153,19 @@ void main () {
 // ---------------------------------- SYSTEM ----------------------------------
 
 void init() {
-    MAX_NUMBER_EVENTS = 7;
-    events_availabe = 7;
+    events_actived = 0;
+    configurePorts();
     initEvents();
     setState(MENU);
 }
 
-void setState(enum STATE newState) {
-    current_state = newState;
-}
-
 void configurePorts(){
+    // setup port A as output
+    WrPortI(SPCR, &SPCRShadow, 0x84);
+
+    // set port A with all zeros
+    WrPortI(PADR, &PADRShadow, 0x00);
+
     // setup port E as output
     BitWrPortI(PEDDR, &SPCRShadow, PORT_OUTPUT, 5);
 }
@@ -169,7 +173,7 @@ void configurePorts(){
 /*
     Returns the shadows of the ports accepted in portName enum
 */
-int getPortShadow(enum portName p_port) {
+char getPortShadow(enum portName p_port) {
     switch(p_port){
         case PORT_A:
             return &PADRShadow;
@@ -177,6 +181,10 @@ int getPortShadow(enum portName p_port) {
         case PORT_E:
             return &PEDRShadow;
     }
+}
+
+void setState(enum STATE newState){
+    current_state = newState;
 }
 
 enum STATE getState(){
@@ -188,9 +196,18 @@ void initEvents(){
     struct Event event;
 
     for (i = 0; i < MAX_NUMBER_EVENTS; i++){
-        event.id = -1;
+        event.array_postion = -1;
         events[i] = event;
     }
+}
+
+void delayMS(int ms_delay) {
+    auto unsigned long t0;
+
+    // ms timer is updated by rabbit
+    t0 = MS_TIMER;
+
+    while (MS_TIMER < (t0 + ms_delay));
 }
 
 // ---------------------------------- MENU ----------------------------------
@@ -229,7 +246,6 @@ cofunc void optionSelected(){
 
         case 5:
             setState(DELETE_EVENT);
-            printf("DELETE_EVENT\n");
             break;
 
         default:
@@ -358,8 +374,10 @@ void inputHourUI() {
 
 cofunc void setDate() {
     unsigned long time_in_sec;
-
+    struct tm time, *time_pointer;
     char data[4];
+
+    time_pointer = &time;
 
     waitfor(getswf(data));
 
@@ -367,15 +385,15 @@ cofunc void setDate() {
 
     switch(data[0]) {
         case 1:
-            wfd askTimeHourData(&time_in_sec, 1, 0);
+            wfd askTimeHourData(&time_in_sec, time_pointer, 1, 0);
             break;
 
         case 2:
-            wfd askTimeHourData(&time_in_sec, 0, 1);
+            wfd askTimeHourData(&time_in_sec, time_pointer, 0, 1);
             break;
 
         case 3:
-            wfd askTimeHourData(&time_in_sec, 1, 1);
+            wfd askTimeHourData(&time_in_sec, time_pointer, 1, 1);
             break;
 
         case 4:
@@ -390,14 +408,10 @@ cofunc void setDate() {
             abort;
     }
 
-    setClock(time_in_sec);
+    setClock(&time_in_sec, time_pointer);
 }
 
-cofunc void askTimeHourData(unsigned long *time_in_sec, int ask_time, int ask_date) {
-    struct tm time, *time_pointer;
-    //int validate, *validate_pointer;
-    
-    time_pointer = &time;
+cofunc void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date) {
 
     printf("\n");
 
@@ -432,10 +446,10 @@ cofunc void getTime(struct tm *time_pointer) {
     min_int = converter(min);
     sec_int = converter(sec);
 
-    if (validateTime()) {
-        (&(*time_pointer)).tm_hour = hour_int;
-        (&(*time_pointer)).tm_min = min_int;
-        (&(*time_pointer)).tm_sec = sec_int;
+    if (validateTime(hour_int, min_int, sec_int)) {
+        (*time_pointer).tm_hour = hour_int;
+        (*time_pointer).tm_min = min_int;
+        (*time_pointer).tm_sec = sec_int;
     } else {
         CLEAR_SCREEN();
         printf ("Datos de hora invalidos\n\n");
@@ -443,7 +457,7 @@ cofunc void getTime(struct tm *time_pointer) {
     }
 }
 
-int validateTime() {
+int validateTime(int hour_int, int min_int, int sec_int) {
     int validate;
 
     validate = 1;
@@ -482,10 +496,10 @@ cofunc void getDate(struct tm *time_pointer) {
     month_int = converter(month);
     year_int = converter(year);
 
-    if (validateDate()) {
-        (&(*time_pointer)).tm_mday = day_int;
-        (&(*time_pointer)).tm_mon = month_int;
-        (&(*time_pointer)).tm_year = year_int - 1900;
+    if (validateDate(day_int, month_int, year_int)) {
+        (*time_pointer).tm_mday = day_int;
+        (*time_pointer).tm_mon = month_int;
+        (*time_pointer).tm_year = year_int - 1900;
     } else {
             CLEAR_SCREEN();
         printf ("Datos de fecha invalidos\n\n");
@@ -493,7 +507,7 @@ cofunc void getDate(struct tm *time_pointer) {
     }
 }
 
-int validateDate() {
+int validateDate(int day_int, int month_int, int year_int) {
     int validate;
 
     validate = 1;
@@ -511,16 +525,17 @@ int validateDate() {
     return validate;
 }
 
-void setClock(unsigned long time_in_sec) {
+void setClock(unsigned long *time_in_sec, struct tm *time_pointer) {
+
     // Set the RTC time
     write_rtc(time_in_sec);
 
-    
+
     *time_in_sec = mktime(time_pointer);
 
     // Update MS_TIMER and SEC_TIMER
-    MS_TIMER = time_in_sec*1000;         // Is in miliseconds
-    SEC_TIMER = time_in_sec;
+    MS_TIMER = (*time_in_sec)*1000;         // Is in miliseconds
+    SEC_TIMER = (*time_in_sec);
     CLEAR_SCREEN();
 }
 
@@ -537,89 +552,107 @@ cofunc void printEvents() {
     for (i = 0; i < MAX_NUMBER_EVENTS; i++){
         event = events[i];
 
-        if (event.id != -1) {
-            printf("*************** %d ***************\n\n", i+1);
-            printf("Nombre: %c\n\n", event.name);
+        if (event.array_postion != -1) {
+            printf("-------- %d --------\n\n", i+1);
+            printf("Nombre: ");
+            printEventData(event.name);
+            printf("\n\n");
             printf("Leds: ");
-            printCharInbin(event.param);
+            printEventData(event.leds);
+            printf("\n\n");
             displayHourUI(event.time);
+            printf("\n");
         }
     }
 
     printf("\n\n");
 }
 
+void printEventData(char data[]) {
+    int i;
+
+    i = 0;
+
+    while((data[i]) != '\0'){
+        printf("%c", data[i]);
+        i++;
+    }    
+}
+
 cofunc void createEventUi() {
-    char name, leds;
-    unsigned long time_in_sec;
+    struct Event event, *event_pointer;
+    struct tm time, *time_pointer;
+    int leds_validate;
+
+    time_pointer = &time;
+    event_pointer = &event;
 
     CLEAR_SCREEN();
 
     // Ask for a event name
-    wfd getEventName(&name);
-    // TODO verify
+    wfd getEventName(&event.name);
+
+    printf("\n\n");
 
     // Ask for leds value
-    wfd getEventLeds(&leds);
+    wfd getEventLeds(&event.leds);
+
     // check if entered value belongs to the possible values
-    if (!validateEventLeds(leds)) {
+    if (!validateEventLeds(&event.leds)) {
         CLEAR_SCREEN();
         printf("Por favor ingrese un dato valido\n\n");
         abort;
     }
 
     // Ask for time and date
-    printf("\n\n");
-    wfd askTimeHourData(&time_int_sec, 1, 1);
+    wfd askTimeHourData(&event.time, time_pointer, 1, 1);
 
-    // Create the event
-    wfd createEvent(name, leds, time_in_sec);
+    insertEvent(event_pointer);
 
+    CLEAR_SCREEN();
     printf("Su evento fue agregado a la lista de eventos programados\n\n");
     setState(MENU);
 }
 
-cofunc void createEvent(char name, char leds, unsigned long time) {
-    struct Event event;
-
-    event.name = name;
-    event.leds = leds;
-    event.time = time;
-    insertEvent(event);
-}
-
-void insertEvent(struct Event event) {
+void insertEvent(struct Event *event) {
     int i;
 
     for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
-        if (events[i].id == -1) {
-            event.id = i;
-            events[i] = event;
-            events_availabe -= 1;
+        if (events[i].array_postion == -1) {
+            (*event).array_postion = i;
+            events[i] = (*event);
+            events_actived += 1;
             break;
         }
     }
 }
 
-cofunc void getEventName(int* name_int) {
-    char name[4];
+cofunc void getEventName(char name[]) {
 
-    printf("Por favor ingrese un nombre para el evento: ");
+    printf("Por favor ingrese un nombre para el evento (maximo 10 caracteres) : ");
 
     // get name
     waitfor(getswf(name));
-    *name_int = converter(name);
 }
 
-cofunc void getEventLeds(int* leds_int) {
-    char leds[12];
+char getStringName(char *name) {
+    char result[11];
+    int i;
 
-    // print message for user ux
+    i = 0;
+
+    while (*(name+i) != '\0') {
+        result[i] = *(name+i);
+        i++;
+    }
+    return result;
+}
+
+cofunc void getEventLeds(char* leds) {
+
     printf("Por favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: \n\n");
 
     waitfor(getswf(leds));
-
-    *leds_int = converterBin(leds);
 }
 
 // Given a char print it as binary
@@ -633,29 +666,17 @@ void printCharInbin(char data) {
     printf("\n\n");
 }
 
-int validateEventLeds(char leds) {
+int validateEventLeds(char *leds) {
     char aux;
-    int i, length, result;
+    int i, result;
 
     i = 0;
-    length = 0;
     result = 1;
 
-    // get the length of the string
-    while(*(data+i) != '\0'){
-        length++;
-        i++;
-    }
-
-    if (length >= 8) {
-        return 0;
-    }
-
-    aux = leds;
+    aux = *leds;
     for (i = 0; i < 8; i++) {
-        printf("%d", );
 
-        if (!!((aux << i) & 0x80) != 1 & !!((aux << i) & 0x80) != 0)) {
+        if (!!((aux << i) & 0x80) != 1 & !!((aux << i) & 0x80) != 0) {
             return 0;
         }
     }
@@ -667,7 +688,7 @@ cofunc void deleteEventUI() {
     char data[4];
     int option, i;
 
-    printf("Ingrese numero de evento a eliminar: ")
+    printf("Ingrese numero de evento a eliminar: ");
     waitfor(getswf(data));
 
     option = converter(data) - 1;
@@ -677,37 +698,73 @@ cofunc void deleteEventUI() {
         abort;
     }
 
-    for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
-        if (i == option) {
-            events[i].id = -1;
-            events_availabe += 1;
-        }
-    }
+    deleteEvent(option);    
 
     CLEAR_SCREEN();
-    printf("Se elimino correctamente el evento")
+    printf("Se elimino correctamente el evento\n\n");
+}
+
+void deleteEvent(int option) {
+    int i;
+    for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
+        if (i == option) {
+            events[i].array_postion = -1;
+            events_actived -= 1;
+        }
+    }
 }
 
 void checkEvents() {
     int i;
-    struct tm time, event_time;
-    struct tm* time_pointer, event_time_pointer;
+    struct tm time, *time_pointer, event_time, *event_time_pointer;
     unsigned long time_in_sec;
+    int show;
 
     time_in_sec = getRtcTime();
 
     time_pointer = &time;
+    event_time_pointer = &event_time;
 
     // convert to time structure
     mktm(time_pointer, time_in_sec);
 
-    for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
-        event_time = mktm(event_time_pointer, events[i].time);
+    if (events_actived > 0) {
+        for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
+            if (events[i].array_postion != -1){
 
-        if (event_time.tm_year == time.tm_year & event_time.tm_mon == time.tm_mon & event_time.tm_mday == time.tm_mday &
-            event_time.tm_hour = time.tm_hour & event_time.tm_min = time.tm_min & event_time.tm_sec = time.tm_sec) {
-            
-            WrPortI(PORT_A, getPortShadow(PORT_A), events[i].leds);
+                mktm(event_time_pointer, events[i].time);
+
+                if (event_time.tm_year == time.tm_year & event_time.tm_mon == time.tm_mon & event_time.tm_mday == time.tm_mday 
+                    & event_time.tm_hour == time.tm_hour & event_time.tm_min == time.tm_min & event_time.tm_sec == time.tm_sec) {
+                    
+                    WrPortI(PORT_A, getPortShadow(PORT_A), turnOnLeds(events[i].leds));
+                    //turnOnLeds(events[i].leds);
+
+                    deleteEvent(events[i].array_postion);                    
+                }
+                break;
+            }
         }
     }
+}
+
+int turnOnLeds(char *leds) {
+    int i;
+    char mask, result;
+
+    mask = 0x80;
+    result = 0x00;
+
+    /*for (i=0; i<8; i++) {
+        if ((*(leds+i) - 0x30) == 1) {
+            BitWrPortI(PORT_A, getPortShadow(PORT_A), 1, i);
+        }
+    }*/
+
+    for (i=0; i<8; i++) {
+        if ((*(leds+i) - 0x30) == 1) {
+            result = result | (mask >> i);
+        }
+    }
+    return result;
 }
