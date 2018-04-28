@@ -1,8 +1,8 @@
-#use IO.LIB
-#use MENU.LIB
-#use CLOCK.LIB
-#use EVENT.LIB
-#use SYSTEM.LIB
+#use LABC2_SYSTEM.LIB
+#use LABC2_IO.LIB
+#use LABC2_MENU.LIB
+#use LABC2_CLOCK.LIB
+#use LABC2_EVENT.LIB
 
 // Main loop function
 void main () {
