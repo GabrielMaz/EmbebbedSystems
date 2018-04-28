@@ -103,3 +103,7 @@ lab2/MAIN-LAB2\.rom
 *.org
 
 *.rom
+
+*.HDL
+
+*.BDL

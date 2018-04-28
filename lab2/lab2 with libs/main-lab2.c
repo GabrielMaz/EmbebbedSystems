@@ -2,6 +2,7 @@
 #use MENU.LIB
 #use CLOCK.LIB
 #use EVENT.LIB
+#use SYSTEM.LIB
 
 // Main loop function
 void main () {
