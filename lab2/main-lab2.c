@@ -45,7 +45,6 @@ void delayMS(int ms_delay);
 void menuUI();
 cofunc void optionSelected();
 int converter(char *data);
-int converterBin(char *data);
 int multipleOfTen(int multiple);
 int multipleOfTwo(int multiple);
 
@@ -278,35 +277,6 @@ int converter(char *data) {
 
         // increase depending on the position of the number | 123 = 100*3 + 10*2 + 1*3
         result += multipleOfTen(length - i - 1)*(*(data+i));
-
-        i++;
-    }
-
-    return result;
-}
-
-int converterBin(char *data) {
-    int i, length, result;
-
-    i = 0;
-    length = 0;
-    result = 0;
-
-    // get the length of the string
-    while(*(data+i) != '\0'){
-        length++;
-        i++;
-    }
-
-    i = 0;
-
-    while (*(data+i) != '\0') {
-
-        // get value of string
-        *(data + i) = *(data + i) - 0x30;       //0x30 hex = 48 ascii = 0
-
-        // increase depending on the position of the number | 0101 = 0*8 + 1*4 + 0*2 + 1*1
-        result += multipleOfTwo(length - i - 1)*(*(data+i));
 
         i++;
     }
