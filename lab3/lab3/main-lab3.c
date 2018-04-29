@@ -1,50 +1,40 @@
-#use LAB2_SYSTEM.LIB
-#use LAB2_IO.LIB
-#use LAB2_MENU.LIB
-#use LAB2_CLOCK.LIB
-#use LAB2_EVENT.LIB
+#use LAB3_IO.LIB
+#use LAB3_MENU.LIB
+#use LAB3_CLOCK.LIB
+#use LAB3_EVENT.LIB
+#use LAB3_SYSTEM.LIB
+#use LAB3_PIC.LIB
 
-// Main loop function
 void main () {
-    int input, data_valid;
-    unsigned long time;
-
     init();
+
     current_state = getState();
 
     while (1) {
-        // 1.1
-        costate {
-            waitfor(DelayMs(800));
-            setOutput(PORT_E, BIT_5, 1);
-            waitfor(DelayMs(400));
-            setOutput(PORT_E, BIT_5, 0);
-        }
 
-        // 1.2
         costate {
             switch(current_state){
-                case (MENU):
+                case MENU:
                     menuUI();
                     wfd optionSelected();
                     break;
 
-                case (DISPLAY_HOUR):
+                case DISPLAY_HOUR:
                     displayHourUI(getRtcTime());
                     setState(MENU);
                     break;
 
-                case (INPUT_HOUR):
+                case INPUT_HOUR:
                     inputHourUI();
                     wfd setDate();
                     break;
 
-                case (LIST_EVENTS):
+                case LIST_EVENTS:
                     wfd printEvents();
                     setState(MENU);
                     break;
 
-                case (ADD_EVENT):
+                case ADD_EVENT:
                     if (events_actived < MAX_NUMBER_EVENTS) {
                         wfd createEventUi();
                     } else {
@@ -54,7 +44,7 @@ void main () {
                     setState(MENU);
                     break;
 
-                case (DELETE_EVENT):
+                case DELETE_EVENT:
                     wfd printEvents();
                     if (events_actived > 0) {
                         wfd deleteEventUI();
@@ -64,12 +54,21 @@ void main () {
                     }
                     setState(MENU);
                     break;
-            }
-        }
+                
+                case ANALOG_INPUT_0:
+                    CLEAR_SCREEN();
+                    getAnalogInput(0);
+			        delayMS(PIC_TIMEOUT);
+                    setState(MENU);
+                    break;
 
-        // 1.3
-        costate {
-            checkEvents();
+                case ANALOG_INPUT_1:
+                    CLEAR_SCREEN();
+                    getAnalogInput(1);
+			        delayMS(PIC_TIMEOUT);
+                    setState(MENU);
+                    break;
+            }
         }
     }
 }
