@@ -1,0 +1,13 @@
+Las librerias deben ser .LIB, como git no me deja meterlas en un commit las pongo como texto plano
+
+Para usar las librerias:
+
+1 - Agragar .LIB a cada archivo
+
+2 - Ir al disco local, a la carpeta de dynamic c rabbit
+
+3 - Entrar en la carpeta Lib
+
+4 - Copiar la carpeta nuestras librerias ahi
+
+NOTA: Cada vez que se cambie algo de la libreria hay que actualizarlo en la carpeta de dynamic c
