@@ -19,11 +19,27 @@ void main () {
     current_state = getState();
 
     while (1) {
-
+        // 1.1
         costate {
-        
+            waitfor(DelayMs(800));
+            setOutput(PORT_E, BIT_5, 1);
+            waitfor(DelayMs(400));
+            setOutput(PORT_E, BIT_5, 0);
+        }
+
+        // 1.2
+        costate {
             wfd selectOption(current_state);
-        
+        }
+
+        // 1.3
+        costate {
+            checkEvents();
+        }
+
+        // Ethernet
+        costate {
+            
         }
     }
 }
