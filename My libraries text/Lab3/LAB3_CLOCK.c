@@ -12,25 +12,38 @@ unsigned long getRtcTime() {
 void displayHourUI(unsigned long time_in_sec);
 /*** EndHeader */
 
-void displayHourUI(unsigned long time_in_sec) {
+void displayHourUI(unsigned long time_in_sec, int console) {
     struct tm time;
     struct tm* time_pointer;
+
 
     time_pointer = &time;
 
     // convert to time structure
     mktm(time_pointer, time_in_sec);
 
-    printf ("%02d/%02d/%04d %02d:%02d:%02d\n\n",
-        time.tm_mday, time.tm_mon, 1900 + time.tm_year,
-        time.tm_hour, time.tm_min, time.tm_sec);
+    if (console) {
+        printf ("%02d/%02d/%04d %02d:%02d:%02d\n\n",
+            time.tm_mday, time.tm_mon, 1900 + time.tm_year,
+            time.tm_hour, time.tm_min, time.tm_sec);
+    } else {
+        sprintf(buffer, "");
+        strcpy(buffer, &time.tm_mday);
+        strcpy(buffer, &time.tm_mon);
+        strcpy(buffer, &time.tm_year);
+        strcpy(buffer, &time.tm_hour);
+        strcpy(buffer, &time.tm_min);
+        strcpy(buffer, &time.tm_sec);
+        
+		sock_puts(&socket, buffer);
+    }
 }
 
 /*** BeginHeader inputHourUI */
 void inputHourUI();
 /*** EndHeader */
 
-void inputHourUI() {
+void inputHourUI(int console) {
     displayHourUI(getRtcTime());
     printf("Cambiar fecha y hora \n\n1 - Cambiar hora \n\n2 - Cambiar fecha \n\n3 - Cambiar fecha y hora \n\n4 - Volver \n\n");
     printf("Seleccione una opcion: ");

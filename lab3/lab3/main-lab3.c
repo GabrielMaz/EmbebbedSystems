@@ -9,10 +9,8 @@
 void main () {
     char buffer[2048];
 	int status;
-	
-	printf("Iniciando Socket\n");
-	sock_init();
-	printf("Iniciado\n");
+
+    initSocket();
 
     init();
 
@@ -20,7 +18,7 @@ void main () {
 
     while (1) {
         // 1.1
-        costate {
+        /*costate {
             waitfor(DelayMs(800));
             setOutput(PORT_E, BIT_5, 1);
             waitfor(DelayMs(400));
@@ -29,17 +27,21 @@ void main () {
 
         // 1.2
         costate {
-            wfd selectOption(current_state);
+            wfd selectOption(current_state, 1);
         }
 
         // 1.3
         costate {
             checkEvents();
-        }
+        }*/
 
         // Ethernet
         costate {
-            
+
+            tcp_tick(&socket);
+
+            wfd selectOption(current_state, 0);
+
         }
     }
 }

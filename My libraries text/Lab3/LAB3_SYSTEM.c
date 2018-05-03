@@ -1,5 +1,7 @@
 /*** BeginHeader */
 
+#define CLEAR_SCREEN() (printf(" \x1Bt"));
+
 #use LAB3_IO.LIB
 #use LAB3_EVENT.LIB
 
@@ -23,6 +25,7 @@ void init();
 /*** EndHeader */
 
 void init() {
+    setState(MENU);
     events_actived = 0;
     configurePorts();
     initEvents();

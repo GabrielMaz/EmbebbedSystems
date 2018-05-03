@@ -1,6 +1,5 @@
 /*** BeginHeader */
 
-#define CLEAR_SCREEN() (printf(" \x1Bt"));
 #define MAX_NUMBER_EVENTS 7
 
 typedef struct Event {
@@ -57,6 +56,33 @@ cofunc void printEvents() {
     }
 
     printf("\n\n");
+}
+
+//TODO
+cofunc void printEventsEthernet() {
+    struct Event event;
+    int i;
+
+    cleanScreenEthernet();
+
+    printEthernet("Listado de eventos:\n\n");
+
+    for (i = 0; i < MAX_NUMBER_EVENTS; i++){
+        event = events[i];
+
+        if (event.array_postion != -1) {
+            printf("-------- %d --------\n\n", i+1);
+            printf("Nombre: ");
+            printEventData(event.name);
+            printf("\n\n");
+            printf("Leds: ");
+            printEventData(event.leds);
+            printf("\n\n");
+            displayHourUI(event.time);
+            printf("\n");
+        }
+    }
+    
 }
 
 /*** BeginHeader printEventData */

@@ -1,39 +1,80 @@
 /*** BeginHeader */
+#use LAB3_SYSTEM.LIB
+#use LAB3_ETHERNET.LIB
 
 #define CLIENTS 50
 
 /*** EndHeader */
 
 /*** BeginHeader menuUI */
-void menuUI();
+void menuUI(int console);
 /*** EndHeader */
 
-void menuUI() {
-    printf("Menu: \n\n1 - Mostrar hora \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n");
-	printf("6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2\n\n ");
-    printf("Seleccione una opcion: ");
+void menuUI(int console) {
+    if (console) {
+        printf("Menu: \n\n1 - Mostrar hora \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n");
+        printf("6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2\n\n ");
+        printf("Seleccione una opcion: ");
+    } else {
+
+        printEthernet("Menu: \n\n1 - Mostrar hora \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2 \n\nSeleccione una opcion: ");
+    }
 }
 
 /*** BeginHeader optionSelected */
-cofunc void optionSelected();
+cofunc void optionSelected(int console);
 /*** EndHeader */
 
-cofunc void optionSelected() {
-    char data[4];
+cofunc void optionSelected(int console) {
+    char data[2];
     int option;
 
-    waitfor(getswf(data));
+    if (console) {
+        waitfor(getswf(data));
+    } else {
+        while (tcp_tick(&socket)) {
+            sock_wait_input(&socket,0,NULL,&status);
+            if(sock_gets(&socket,buffer,2048)) {
+                data[0] = buffer[0];
+                CLEAR_BUFFER();
+                break;
+            }
+        }
+        
+        sock_err:
+		switch(status)
+		{
+			case 1: /* foreign host closed */
+				printf("User closed session\n");
+				break;
+			case -1: /* time-out */
+				printf("Connection timed out\n");
+				break;
+		}
+    }
 
     option = converter(data);
 
+    printf ("\n option: %d", option);
+
     switch (option) {
         case 1:
-        		CLEAR_SCREEN();
+            if (console) {
+                CLEAR_SCREEN();
+            } else {
+                cleanScreenEthernet();
+            }
+        	
             setState(DISPLAY_HOUR);
             break;
 
         case 2:
-            CLEAR_SCREEN();
+            if (console) {
+                CLEAR_SCREEN();
+            } else {
+                cleanScreenEthernet();
+            }
+
             setState(INPUT_HOUR);
             break;
 
@@ -50,15 +91,27 @@ cofunc void optionSelected() {
             break;
 
         case 6:
+            if (console) {
+                CLEAR_SCREEN();
+            } else {
+                cleanScreenEthernet();
+            }
+            
             setState(ANALOG_INPUT_0);
             break;
 
         case 7:
+            if (console) {
+                CLEAR_SCREEN();
+            } else {
+                cleanScreenEthernet();
+            }
+
             setState(ANALOG_INPUT_1);
             break;
 
         default:
-            CLEAR_SCREEN();
+            //CLEAR_SCREEN();
             printf("Por favor seleccione una de las opciones posibles\n\n");
             abort;
     }
@@ -131,14 +184,14 @@ int multipleOfTwo(int multiple) {
 }
 
 /*** BeginHeader selectOption */
-cofunc void selectOption(int state);
+cofunc void selectOption(int state, int console);
 /*** EndHeader */
 
-cofunc void selectOption(int state) {
+cofunc void selectOption(int state, int console) {
     switch(state){
         case MENU:
-            menuUI();
-            wfd optionSelected();
+            menuUI(console);
+            wfd optionSelected(console);
             break;
 
         case DISPLAY_HOUR:
@@ -167,25 +220,28 @@ cofunc void selectOption(int state) {
             break;
 
         case DELETE_EVENT:
-            wfd printEvents();
-            if (events_actived > 0) {
-                wfd deleteEventUI();
+            if (console) {
+                if (events_actived > 0) {
+                    wfd deleteEventUI();
+                } else {
+                    CLEAR_SCREEN();
+                    printf("No hay eventos para eliminar\n\n");
+                }
             } else {
-                CLEAR_SCREEN();
-                printf("No hay eventos para eliminar\n\n");
+                cleanScreenEthernet();
             }
+            wfd printEvents(console);
+            
             setState(MENU);
             break;
         
         case ANALOG_INPUT_0:
-            CLEAR_SCREEN();
             getAnalogInput(0);
             delayMS(PIC_TIMEOUT);
             setState(MENU);
             break;
 
         case ANALOG_INPUT_1:
-            CLEAR_SCREEN();
             getAnalogInput(1);
             delayMS(PIC_TIMEOUT);
             setState(MENU);
