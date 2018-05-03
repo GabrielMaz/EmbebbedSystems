@@ -16,7 +16,6 @@ void menuUI(int console) {
         printf("6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2\n\n ");
         printf("Seleccione una opcion: ");
     } else {
-
         printEthernet("Menu: \n\n1 - Mostrar hora \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2 \n\nSeleccione una opcion: ");
     }
 }
@@ -42,20 +41,18 @@ cofunc void optionSelected(int console) {
         }
         
         sock_err:
-		switch(status)
-		{
-			case 1: /* foreign host closed */
-				printf("User closed session\n");
-				break;
-			case -1: /* time-out */
-				printf("Connection timed out\n");
-				break;
-		}
+        switch(status)
+        {
+            case 1: /* foreign host closed */
+                printf("User closed session\n");
+                break;
+            case -1: /* time-out */
+                printf("Connection timed out\n");
+                break;
+        }
     }
 
     option = converter(data);
-
-    printf ("\n option: %d", option);
 
     switch (option) {
         case 1:
@@ -64,7 +61,7 @@ cofunc void optionSelected(int console) {
             } else {
                 cleanScreenEthernet();
             }
-        	
+            
             setState(DISPLAY_HOUR);
             break;
 
@@ -111,8 +108,13 @@ cofunc void optionSelected(int console) {
             break;
 
         default:
-            //CLEAR_SCREEN();
-            printf("Por favor seleccione una de las opciones posibles\n\n");
+            if (console) {
+                CLEAR_SCREEN();
+                printf("Por favor seleccione una de las opciones posibles\n\n");
+            } else {
+                cleanScreenEthernet();
+                printEthernet("Por favor seleccione una de las opciones posibles\n\n");
+            }
             abort;
     }
 
@@ -195,12 +197,13 @@ cofunc void selectOption(int state, int console) {
             break;
 
         case DISPLAY_HOUR:
-            displayHourUI(getRtcTime());
+            printf("%d", console);
+            displayHourUI(getRtcTime(), console);
             setState(MENU);
             break;
 
         case INPUT_HOUR:
-            inputHourUI();
+            inputHourUI(console);
             wfd setDate();
             break;
 

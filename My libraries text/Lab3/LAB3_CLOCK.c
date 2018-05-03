@@ -9,12 +9,14 @@ unsigned long getRtcTime() {
 }
 
 /*** BeginHeader displayHourUI */
-void displayHourUI(unsigned long time_in_sec);
+void displayHourUI(unsigned long time_in_sec, int console);
 /*** EndHeader */
 
 void displayHourUI(unsigned long time_in_sec, int console) {
     struct tm time;
     struct tm* time_pointer;
+    char aux[6], result[22];
+    
 
 
     time_pointer = &time;
@@ -27,26 +29,52 @@ void displayHourUI(unsigned long time_in_sec, int console) {
             time.tm_mday, time.tm_mon, 1900 + time.tm_year,
             time.tm_hour, time.tm_min, time.tm_sec);
     } else {
-        sprintf(buffer, "");
-        strcpy(buffer, &time.tm_mday);
-        strcpy(buffer, &time.tm_mon);
-        strcpy(buffer, &time.tm_year);
-        strcpy(buffer, &time.tm_hour);
-        strcpy(buffer, &time.tm_min);
-        strcpy(buffer, &time.tm_sec);
+
+        sprintf(result, "%2d", time.tm_mday);
+
+        strcat(result, "/");
+
+        sprintf(aux, "%2d", time.tm_mon);
+        strcat(result, aux);
+
+        strcat(result, "/");
+
+        sprintf(aux, "%4d", time.tm_year + 1900);
+        strcat(result, aux);
+
+        strcat(result, " ");
         
-		sock_puts(&socket, buffer);
+        sprintf(aux, "%2d", time.tm_hour);
+        strcat(result, aux);
+        
+        strcat(result, ":");
+        
+        sprintf(aux, "%2d", time.tm_min);
+        strcat(result, aux);
+        
+        strcat(result, ":");
+        
+        sprintf(aux, "%2d", time.tm_sec);
+        strcat(result, aux);
+
+        printEthernet(&result);
     }
 }
 
 /*** BeginHeader inputHourUI */
-void inputHourUI();
+void inputHourUI(int console);
 /*** EndHeader */
 
 void inputHourUI(int console) {
-    displayHourUI(getRtcTime());
-    printf("Cambiar fecha y hora \n\n1 - Cambiar hora \n\n2 - Cambiar fecha \n\n3 - Cambiar fecha y hora \n\n4 - Volver \n\n");
-    printf("Seleccione una opcion: ");
+    displayHourUI(getRtcTime(), console);
+
+    if (console) {
+        printf("Cambiar fecha y hora \n\n1 - Cambiar hora \n\n2 - Cambiar fecha \n\n3 - Cambiar fecha y hora \n\n4 - Volver \n\n");
+        printf("Seleccione una opcion: ");
+    } else {
+        printEthernet("Cambiar fecha y hora \n\n1 - Cambiar hora \n\n2 - Cambiar fecha \n\n3 - Cambiar fecha y hora \n\n4 - Volver \n\nSeleccione una opcion: ");
+    }
+    
 }
 
 /*** BeginHeader setDate */
