@@ -48,14 +48,16 @@ void initSocket() {
     }
 }
 
-/*** BeginHeader cleanScreenEthernet */
-void cleanScreenEthernet();
+/*** BeginHeader clearScreenEthernet */
+void clearScreenEthernet();
 /*** EndHeader */
 
-void cleanScreenEthernet() {
-    sprintf(buffer, "\n\n");
-    sock_puts(&socket,buffer);
-    CLEAR_BUFFER();
+void clearScreenEthernet() {
+    if (tcp_tick(&socket)) {
+        sprintf(buffer, "\n\n");
+        sock_puts(&socket,buffer);
+        CLEAR_BUFFER();
+    }
 }
 
 /*** BeginHeader printEthernet */
@@ -63,7 +65,9 @@ void printEthernet();
 /*** EndHeader */
 
 void printEthernet(char *message) {
-    sprintf(buffer, message);
-    sock_puts(&socket,buffer);
-    CLEAR_BUFFER();
+    if (tcp_tick(&socket)) {
+        sprintf(buffer, message);
+        sock_puts(&socket,buffer);
+        CLEAR_BUFFER();
+    }
 }

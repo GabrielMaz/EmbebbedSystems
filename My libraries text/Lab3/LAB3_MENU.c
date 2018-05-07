@@ -25,24 +25,24 @@ cofunc void optionSelected(int console);
 /*** EndHeader */
 
 cofunc void optionSelected(int console) {
-    char data[2];
+    char data[4];
     int option;
 
     if (console) {
         waitfor(getswf(data));
+        option = converter(data);
     } else {
         while (tcp_tick(&socket)) {
             sock_wait_input(&socket,0,NULL,&status);
             if(sock_gets(&socket,buffer,2048)) {
-                data[0] = buffer[0];
+                option = converter(buffer);
                 CLEAR_BUFFER();
                 break;
             }
         }
         
         sock_err:
-        switch(status)
-        {
+        switch(status) {
             case 1: /* foreign host closed */
                 printf("User closed session\n");
                 break;
@@ -52,14 +52,12 @@ cofunc void optionSelected(int console) {
         }
     }
 
-    option = converter(data);
-
     switch (option) {
         case 1:
             if (console) {
                 CLEAR_SCREEN();
             } else {
-                cleanScreenEthernet();
+                clearScreenEthernet();
             }
             
             setState(DISPLAY_HOUR);
@@ -69,9 +67,8 @@ cofunc void optionSelected(int console) {
             if (console) {
                 CLEAR_SCREEN();
             } else {
-                cleanScreenEthernet();
+                clearScreenEthernet();
             }
-
             setState(INPUT_HOUR);
             break;
 
@@ -91,7 +88,7 @@ cofunc void optionSelected(int console) {
             if (console) {
                 CLEAR_SCREEN();
             } else {
-                cleanScreenEthernet();
+                clearScreenEthernet();
             }
             
             setState(ANALOG_INPUT_0);
@@ -101,7 +98,7 @@ cofunc void optionSelected(int console) {
             if (console) {
                 CLEAR_SCREEN();
             } else {
-                cleanScreenEthernet();
+                clearScreenEthernet();
             }
 
             setState(ANALOG_INPUT_1);
@@ -112,7 +109,7 @@ cofunc void optionSelected(int console) {
                 CLEAR_SCREEN();
                 printf("Por favor seleccione una de las opciones posibles\n\n");
             } else {
-                cleanScreenEthernet();
+                clearScreenEthernet();
                 printEthernet("Por favor seleccione una de las opciones posibles\n\n");
             }
             abort;
@@ -197,14 +194,13 @@ cofunc void selectOption(int state, int console) {
             break;
 
         case DISPLAY_HOUR:
-            printf("%d", console);
             displayHourUI(getRtcTime(), console);
             setState(MENU);
             break;
 
         case INPUT_HOUR:
             inputHourUI(console);
-            wfd setDate();
+            wfd setDate(console);
             break;
 
         case LIST_EVENTS:
@@ -231,7 +227,7 @@ cofunc void selectOption(int state, int console) {
                     printf("No hay eventos para eliminar\n\n");
                 }
             } else {
-                cleanScreenEthernet();
+                clearScreenEthernet();
             }
             wfd printEvents(console);
             
@@ -239,13 +235,13 @@ cofunc void selectOption(int state, int console) {
             break;
         
         case ANALOG_INPUT_0:
-            getAnalogInput(0);
+            getAnalogInput(0, console);
             delayMS(PIC_TIMEOUT);
             setState(MENU);
             break;
 
         case ANALOG_INPUT_1:
-            getAnalogInput(1);
+            getAnalogInput(1, console);
             delayMS(PIC_TIMEOUT);
             setState(MENU);
             break;

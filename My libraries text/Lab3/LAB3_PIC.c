@@ -27,14 +27,15 @@ char converterASCIITochar(char input) {
 }
 
 /*** BeginHeader getAnalogInput */
-void getAnalogInput(unsigned char analog_input);
+void getAnalogInput(unsigned char analog_input, int console);
 /*** EndHeader */
 
-void getAnalogInput( unsigned char analog_input ) {
+void getAnalogInput(unsigned char analog_input, int console) {
 	char data[PIC_MAX_LENGHT_MSG];
 	char crc, i;
 	int result;
 	unsigned long timeout;
+	char resultEthernet[25];
 
 	serCrdFlush();
 	serCwrFlush();
@@ -77,5 +78,10 @@ void getAnalogInput( unsigned char analog_input ) {
 	result += converterASCIITochar(data[analog_input * 3 + 4]) * 16;
 	result += converterASCIITochar(data[analog_input * 3 + 5]);
 
-	printf("Entrada analogica %d == %d\n\n", analog_input, result);
+	if (console) {
+		printf("Entrada analogica %d = %d\n\n", analog_input, result);
+	} else {
+		sprintf(resultEthernet, "Entrada analogica %d = %d", analog_input, result);
+		printEthernet(resultEthernet);
+	}
 }

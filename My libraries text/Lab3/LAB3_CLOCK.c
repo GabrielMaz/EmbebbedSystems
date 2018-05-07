@@ -17,8 +17,6 @@ void displayHourUI(unsigned long time_in_sec, int console) {
     struct tm* time_pointer;
     char aux[6], result[22];
     
-
-
     time_pointer = &time;
 
     // convert to time structure
@@ -30,34 +28,11 @@ void displayHourUI(unsigned long time_in_sec, int console) {
             time.tm_hour, time.tm_min, time.tm_sec);
     } else {
 
-        sprintf(result, "%2d", time.tm_mday);
+        sprintf (result, "%02d/%02d/%04d %02d:%02d:%02d\n\n",
+            time.tm_mday, time.tm_mon, 1900 + time.tm_year,
+            time.tm_hour, time.tm_min, time.tm_sec);
 
-        strcat(result, "/");
-
-        sprintf(aux, "%2d", time.tm_mon);
-        strcat(result, aux);
-
-        strcat(result, "/");
-
-        sprintf(aux, "%4d", time.tm_year + 1900);
-        strcat(result, aux);
-
-        strcat(result, " ");
-        
-        sprintf(aux, "%2d", time.tm_hour);
-        strcat(result, aux);
-        
-        strcat(result, ":");
-        
-        sprintf(aux, "%2d", time.tm_min);
-        strcat(result, aux);
-        
-        strcat(result, ":");
-        
-        sprintf(aux, "%2d", time.tm_sec);
-        strcat(result, aux);
-
-        printEthernet(&result);
+        printEthernet(result);
     }
 }
 
@@ -72,52 +47,99 @@ void inputHourUI(int console) {
         printf("Cambiar fecha y hora \n\n1 - Cambiar hora \n\n2 - Cambiar fecha \n\n3 - Cambiar fecha y hora \n\n4 - Volver \n\n");
         printf("Seleccione una opcion: ");
     } else {
+        tcp_tick(&socket);
         printEthernet("Cambiar fecha y hora \n\n1 - Cambiar hora \n\n2 - Cambiar fecha \n\n3 - Cambiar fecha y hora \n\n4 - Volver \n\nSeleccione una opcion: ");
     }
     
 }
 
 /*** BeginHeader setDate */
-cofunc void setDate();
+cofunc void setDate(int console);
 /*** EndHeader */
 
-cofunc void setDate() {
+cofunc void setDate(int console) {
     unsigned long time_in_sec;
     struct tm time, *time_pointer;
     char data[4];
+    int option;
 
     time_pointer = &time;
 
-    waitfor(getswf(data));
+    if (console) {
+        waitfor(getswf(data));
+        option = converter(data);
+    } else {
+        while (tcp_tick(&socket)) {
+            sock_wait_input(&socket,0,NULL,&status);
+            if(sock_gets(&socket,buffer,2048)) {
+                option = converter(buffer);
+                //data[0] = buffer[0];
+                CLEAR_BUFFER();
+                break;
+            }
+        }
+        sock_err:
+        switch(status)
+        {
+            case 1: /* foreign host closed */
+                printf("User closed session\n");
+                break;
+            case -1: /* time-out */
+                printf("Connection timed out\n");
+                break;
+        }
+    }
 
-    converter(data);
-
-    switch(data[0]) {
+    switch(option) {
         case 1:
-            wfd askTimeHourData(&time_in_sec, time_pointer, 1, 0);
+            if (console) {
+                wfd askTimeHourData(&time_in_sec, time_pointer, 1, 0);
+            } else {
+                wfd askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 0);
+            }
             break;
 
         case 2:
-            wfd askTimeHourData(&time_in_sec, time_pointer, 0, 1);
+            if (console) {
+                wfd askTimeHourData(&time_in_sec, time_pointer, 0, 1);
+            } else {
+                wfd askTimeHourDataEthernet(&time_in_sec, time_pointer, 0, 1);
+            }
             break;
 
         case 3:
-            wfd askTimeHourData(&time_in_sec, time_pointer, 1, 1);
+            if (console) {
+                wfd askTimeHourData(&time_in_sec, time_pointer, 1, 1);
+            } else {
+                wfd askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 1);
+            }
             break;
 
         case 4:
-        	CLEAR_SCREEN();
+            if (console) {
+        	    CLEAR_SCREEN();
+            } else {
+                tcp_tick(&socket);
+                clearScreenEthernet();
+            }
+
         	setState(MENU);
             abort;
             break;
 
         default:
-            CLEAR_SCREEN();
-            printf("Por favor seleccione una de las opciones posibles\n\n");
+            if (console) {
+                CLEAR_SCREEN();
+                printf("Por favor seleccione una de las opciones posibles\n\n");
+            } else {
+                tcp_tick(&socket);
+                clearScreenEthernet();
+                printEthernet("Por favor seleccione una de las opciones posibles\n\n");
+            }
             abort;
     }
 
-    setClock(&time_in_sec, time_pointer);
+    setClock(&time_in_sec, time_pointer, console);
 }
 
 /*** BeginHeader askTimeHourData */
@@ -133,6 +155,24 @@ cofunc void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer,
     }
     if (ask_date) {
         wfd getDate(time_pointer);
+    }
+
+    *time_in_sec = mktime(time_pointer);
+}
+
+/*** BeginHeader askTimeHourDataEthernet */
+cofunc void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date);
+/*** EndHeader */
+
+cofunc void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date) {
+
+    printEthernet("\n");
+
+    if (ask_time) {
+        wfd getTimeEthernet(time_pointer);
+    }
+    if (ask_date) {
+        wfd getDateEthernet(time_pointer);
     }
 
     *time_in_sec = mktime(time_pointer);
@@ -169,7 +209,73 @@ cofunc void getTime(struct tm *time_pointer) {
         (*time_pointer).tm_sec = sec_int;
     } else {
         CLEAR_SCREEN();
-        printf ("Datos de hora invalidos\n\n");
+        printf ("Datos de fecha invalidos\n\n");
+        abort;
+    }
+}
+
+/*** BeginHeader getTimeEthernet */
+cofunc void getTimeEthernet(struct tm *time_pointer);
+/*** EndHeader */
+
+cofunc void getTimeEthernet(struct tm *time_pointer) {
+    int hour_int, min_int, sec_int, validate;
+
+    validate = 1;
+
+    CLEAR_BUFFER();
+
+    // Ask for time
+    while (tcp_tick(&socket)) {
+        printEthernet("Ingrese hora: ");
+        sock_wait_input(&socket,0,NULL,&status);
+        if(sock_gets(&socket,buffer,2048)) {
+            hour_int = converter(buffer);
+            CLEAR_BUFFER();
+            break;
+        }
+    }
+    
+    while (tcp_tick(&socket)) {
+        printEthernet("\nIngrese minutos: ");
+        sock_wait_input(&socket,0,NULL,&status);
+        if(sock_gets(&socket,buffer,2048)) {
+            min_int = converter(buffer);
+            CLEAR_BUFFER();
+            break;
+        }
+    }
+    
+    while (tcp_tick(&socket)) {
+        printEthernet("\nIngrese segundos: ");
+        sock_wait_input(&socket,0,NULL,&status);
+        if(sock_gets(&socket,buffer,2048)) {
+            sec_int = converter(buffer);
+            CLEAR_BUFFER();
+            break;
+        }
+    }
+    
+    sock_err:
+    switch(status) {
+        case 1: /* foreign host closed */
+            printf("User closed session\n");
+            break;
+        case -1: /* time-out */
+            printf("Connection timed out\n");
+            break;
+    }
+
+    if (validateTime(hour_int, min_int, sec_int)) {
+        (*time_pointer).tm_hour = hour_int;
+        (*time_pointer).tm_min = min_int;
+        (*time_pointer).tm_sec = sec_int;
+    } else {
+        while (tcp_tick(&socket)) {
+            clearScreenEthernet();
+            printEthernet("Datos de hora invalidos\n\n");
+            break;
+        }
         abort;
     }
 }
@@ -232,6 +338,66 @@ cofunc void getDate(struct tm *time_pointer) {
     }
 }
 
+/*** BeginHeader getDateEthernet */
+cofunc void getDateEthernet(struct tm *time_pointer);
+/*** EndHeader */
+
+cofunc void getDateEthernet(struct tm *time_pointer) {
+    int day_int, month_int, year_int, validate;
+
+    validate = 1;
+
+    // Ask for date
+    printEthernet("\nIngrese dia: ");
+    while (tcp_tick(&socket)) {
+        sock_wait_input(&socket,0,NULL,&status);
+        if(sock_gets(&socket,buffer,2048)) {
+            day_int = converter(buffer);
+            CLEAR_BUFFER();
+            break;
+        }
+    }
+    
+    printEthernet("\nIngrese mes: ");
+    while (tcp_tick(&socket)) {
+        sock_wait_input(&socket,0,NULL,&status);
+        if(sock_gets(&socket,buffer,2048)) {
+            month_int = converter(buffer);
+            CLEAR_BUFFER();
+            break;
+        }
+    }
+    printEthernet("\nIngrese anio: ");
+    while (tcp_tick(&socket)) {
+        sock_wait_input(&socket,0,NULL,&status);
+        if(sock_gets(&socket,buffer,2048)) {
+            year_int = converter(buffer);
+            CLEAR_BUFFER();
+            break;
+        }
+    }
+
+    sock_err:
+    switch(status) {
+        case 1: /* foreign host closed */
+            printf("User closed session\n");
+            break;
+        case -1: /* time-out */
+            printf("Connection timed out\n");
+            break;
+    }
+
+    if (validateDate(day_int, month_int, year_int)) {
+        (*time_pointer).tm_mday = day_int;
+        (*time_pointer).tm_mon = month_int;
+        (*time_pointer).tm_year = year_int - 1900;
+    } else {
+        clearScreenEthernet();
+        printEthernet("Datos de hora invalidos\n\n");
+        abort;
+    }
+}
+
 /*** BeginHeader validateDate */
 int validateDate(int day_int, int month_int, int year_int);
 /*** EndHeader */
@@ -255,19 +421,23 @@ int validateDate(int day_int, int month_int, int year_int) {
 }
 
 /*** BeginHeader setClock */
-void setClock(unsigned long *time_in_sec, struct tm *time_pointer);
+void setClock(unsigned long *time_in_sec, struct tm *time_pointer, int console);
 /*** EndHeader */
 
-void setClock(unsigned long *time_in_sec, struct tm *time_pointer) {
+void setClock(unsigned long *time_in_sec, struct tm *time_pointer, int console) {
 
     // Set the RTC time
     write_rtc(time_in_sec);
-
 
     *time_in_sec = mktime(time_pointer);
 
     // Update MS_TIMER and SEC_TIMER
     MS_TIMER = (*time_in_sec)*1000;         // Is in miliseconds
     SEC_TIMER = (*time_in_sec);
-    CLEAR_SCREEN();
+
+    if (console) {
+        CLEAR_SCREEN();
+    } else {
+        clearScreenEthernet();
+    }
 }
