@@ -166,8 +166,6 @@ cofunc void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_
 
 cofunc void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date) {
 
-    printEthernet("\n");
-
     if (ask_time) {
         wfd getTimeEthernet(time_pointer);
     }
@@ -227,7 +225,7 @@ cofunc void getTimeEthernet(struct tm *time_pointer) {
 
     // Ask for time
     while (tcp_tick(&socket)) {
-        printEthernet("Ingrese hora: ");
+        printEthernet("\nIngrese hora: ");
         sock_wait_input(&socket,0,NULL,&status);
         if(sock_gets(&socket,buffer,2048)) {
             hour_int = converter(buffer);

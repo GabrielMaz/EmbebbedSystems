@@ -204,13 +204,13 @@ cofunc void selectOption(int state, int console) {
             break;
 
         case LIST_EVENTS:
-            wfd printEvents();
+            wfd printEventsEthernet();
             setState(MENU);
             break;
 
         case ADD_EVENT:
             if (events_actived < MAX_NUMBER_EVENTS) {
-                wfd createEventUi();
+                wfd createEventUi(console);
             } else {
                 CLEAR_SCREEN();
                 printf("No hay espacio para mas eventos\n\n");

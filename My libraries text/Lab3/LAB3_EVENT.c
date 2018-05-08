@@ -1,5 +1,7 @@
 /*** BeginHeader */
 
+#use LAB3_ETHERNET.LIB
+
 #define MAX_NUMBER_EVENTS 7
 
 typedef struct Event {
@@ -54,35 +56,7 @@ cofunc void printEvents() {
             printf("\n");
         }
     }
-
     printf("\n\n");
-}
-
-//TODO
-cofunc void printEventsEthernet() {
-    struct Event event;
-    int i;
-
-    cleanScreenEthernet();
-
-    printEthernet("Listado de eventos:\n\n");
-
-    for (i = 0; i < MAX_NUMBER_EVENTS; i++){
-        event = events[i];
-
-        if (event.array_postion != -1) {
-            printf("-------- %d --------\n\n", i+1);
-            printf("Nombre: ");
-            printEventData(event.name);
-            printf("\n\n");
-            printf("Leds: ");
-            printEventData(event.leds);
-            printf("\n\n");
-            displayHourUI(event.time);
-            printf("\n");
-        }
-    }
-    
 }
 
 /*** BeginHeader printEventData */
@@ -100,11 +74,54 @@ void printEventData(char data[]) {
     }    
 }
 
-/*** BeginHeader createEventUi */
-cofunc void createEventUi();
+/*** BeginHeader printEventsEthernet */
+cofunc void printEventsEthernet();
 /*** EndHeader */
 
-cofunc void createEventUi() {
+cofunc void printEventsEthernet() {
+    struct Event event;
+    int i;
+    char result[80];
+
+    printEthernet("\n\nListado de eventos:\n\n");
+
+    for (i = 0; i < MAX_NUMBER_EVENTS; i++){
+        event = events[i];
+
+        if (event.array_postion != -1) {
+            sprintf(result, "-------- %d --------\n\nNombre: ", i+1);
+            printEventDataEthernet(event.name, result);
+            strcat(result, "\n\nLeds:");
+            printEventDataEthernet(event.leds, result);
+            strcat(result, "\n");
+            printEthernet(result);
+            displayHourUI(event.time, 0);
+        }
+    }
+}
+
+/*** BeginHeader printEventDataEthernet */
+void printEventDataEthernet(char data[], char resultEthernet[]);
+/*** EndHeader */
+
+void printEventDataEthernet(char data[], char resultEthernet[]) {
+    int i;
+    char result[12];
+
+    i = 0;
+
+    while((data[i]) != '\0'){
+        result[i] = data[i];
+        i++;
+    }
+    strcat(resultEthernet, result);
+}
+
+/*** BeginHeader createEventUi */
+cofunc void createEventUi(int console);
+/*** EndHeader */
+
+cofunc void createEventUi(int console) {
     struct Event event, *event_pointer;
     struct tm time, *time_pointer;
     int leds_validate;
@@ -115,12 +132,10 @@ cofunc void createEventUi() {
     CLEAR_SCREEN();
 
     // Ask for a event name
-    wfd getEventName(&event.name);
-
-    printf("\n\n");
+    wfd getEventName(&event.name, console);
 
     // Ask for leds value
-    wfd getEventLeds(&event.leds);
+    wfd getEventLeds(&event.leds, console);
 
     // check if entered value belongs to the possible values
     if (!validateEventLeds(&event.leds)) {
@@ -129,13 +144,22 @@ cofunc void createEventUi() {
         abort;
     }
 
-    // Ask for time and date
-    wfd askTimeHourData(&event.time, time_pointer, 1, 1);
+    if (console) {
+        // Ask for time and date
+        wfd askTimeHourData(&event.time, time_pointer, 1, 1);
+    } else {
+        wfd askTimeHourDataEthernet(&event.time, time_pointer, 1,1);
+    }
 
     insertEvent(event_pointer);
 
     CLEAR_SCREEN();
-    printf("Su evento fue agregado a la lista de eventos programados\n\n");
+
+    if (console) {
+        printf("Su evento fue agregado a la lista de eventos programados\n\n");
+    } else {
+        printEthernet("\nSu evento fue agregado a la lista de eventos programados\n\n");
+    }
     setState(MENU);
 }
 
@@ -157,15 +181,39 @@ void insertEvent(struct Event *event) {
 }
 
 /*** BeginHeader getEventName */
-cofunc void getEventName(char name[]);
+cofunc void getEventName(char name[], int console);
 /*** EndHeader */
 
-cofunc void getEventName(char name[]) {
+cofunc void getEventName(char name[], int console) {
 
-    printf("Por favor ingrese un nombre para el evento (maximo 10 caracteres) : ");
+    if (console) {
+        printf("\nPor favor ingrese un nombre para el evento (maximo 10 caracteres): ");
 
-    // get name
-    waitfor(getswf(name));
+        // get name
+        waitfor(getswf(name));
+
+    } else {
+        printEthernet("\nPor favor ingrese un nombre para el evento (maximo 10 caracteres): ");
+        CLEAR_BUFFER();
+        while (tcp_tick(&socket)) {
+            sock_wait_input(&socket,0,NULL,&status);
+            if(sock_gets(&socket,buffer,2048)) {
+                strcpy(name, buffer);
+                CLEAR_BUFFER();
+                break;
+            }
+        }
+        
+        sock_err:
+        switch(status) {
+            case 1: /* foreign host closed */
+                printf("User closed session\n");
+                break;
+            case -1: /* time-out */
+                printf("Connection timed out\n");
+                break;
+        }
+    }
 }
 
 /*** BeginHeader getStringName */
@@ -186,14 +234,37 @@ char getStringName(char *name) {
 }
 
 /*** BeginHeader getEventLeds */
-cofunc void getEventLeds(char* leds);
+cofunc void getEventLeds(char* leds, int console);
 /*** EndHeader */
 
-cofunc void getEventLeds(char* leds) {
+cofunc void getEventLeds(char* leds, int console) {
 
-    printf("Por favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: \n\n");
+    if (console) {
+        printf("\nPor favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: ");
 
-    waitfor(getswf(leds));
+        waitfor(getswf(leds));
+    } else {
+        printEthernet("\nPor favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: ");
+        CLEAR_BUFFER();
+        while (tcp_tick(&socket)) {
+            sock_wait_input(&socket,0,NULL,&status);
+            if(sock_gets(&socket,buffer,2048)) {
+                strcpy(leds, buffer);
+                CLEAR_BUFFER();
+                break;
+            }
+        }
+        
+        sock_err:
+        switch(status) {
+            case 1: /* foreign host closed */
+                printf("User closed session\n");
+                break;
+            case -1: /* time-out */
+                printf("Connection timed out\n");
+                break;
+        }
+    }
 }
 
 /*** BeginHeader */
