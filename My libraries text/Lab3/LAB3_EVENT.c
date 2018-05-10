@@ -120,7 +120,6 @@ void printEventDataEthernet(char data[], char resultEthernet[]) {
 
     i = 0;
 
-    //while((data[i]) == 0x30 | (data[i]) == 0x31){
     while((data[i]) != '\0'){ 
         result[i] = data[i];
         i++;
@@ -157,9 +156,12 @@ cofunc void createEventUi(int console) {
     struct Event event, *event_pointer;
     struct tm time, *time_pointer;
     int time_validated, date_validate;
+    char *name_pointer, *leds_pointer;
 
     time_pointer = &time;
     event_pointer = &event;
+    name_pointer = (*event_pointer).name;
+    leds_pointer = (*event_pointer).leds;
 
     time_validated = 1;
     date_validate = 1;
@@ -179,13 +181,13 @@ cofunc void createEventUi(int console) {
 
     } else {
             // Ask for a event name
-        wfd getEventName(&event.name, console);
+        wfd getEventName(name_pointer, console);
 
         // Ask for leds value
-        wfd getEventLeds(&event.leds, console);
+        wfd getEventLeds(leds_pointer, console);
 
         // check if entered value belongs to the possible values
-        if (!validateEventLeds(&event.leds)) {
+        if (!validateEventLeds(leds_pointer)) {
             if (console) {
                 CLEAR_SCREEN();
                 printf("Por favor ingrese un dato valido\n\n");
@@ -241,10 +243,10 @@ void insertEvent(struct Event *event) {
 }
 
 /*** BeginHeader getEventName */
-cofunc void getEventName(char name[], int console);
+cofunc void getEventName(char *name, int console);
 /*** EndHeader */
 
-cofunc void getEventName(char name[], int console) {
+cofunc void getEventName(char *name, int console) {
 
     if (console) {
         printf("\nPor favor ingrese un nombre para el evento (maximo 10 caracteres): ");
@@ -381,10 +383,14 @@ cofunc void deleteEventUI() {
         abort;
     }
 
-    deleteEvent(option);    
-
     CLEAR_SCREEN();
-    printf("\nSe elimino correctamente el evento\n");
+
+    if (deleteEvent(option)) {
+        printf("\nSe elimino correctamente el evento\n");
+
+    } else {
+        printf("\nNo existe un evento con ese indice\n");
+    }
 }
 
 /*** BeginHeader deleteEventEthernetUI */
@@ -422,24 +428,33 @@ cofunc void deleteEventEthernetUI() {
         abort;
     }
 
-    deleteEvent(option);    
-
     clearScreenEthernet();
-    printEthernet("Se elimino correctamente el evento\n\n");
+
+    if (deleteEvent(option)) {
+        printEthernet("Se elimino correctamente el evento");
+
+    } else {
+        printEthernet("No existe un evento con ese indice");
+    }    
 }
 
 /*** BeginHeader deleteEvent */
-void deleteEvent(int option);
+int deleteEvent(int option);
 /*** EndHeader */
 
-void deleteEvent(int option) {
-    int i;
+int deleteEvent(int option) {
+    int i, deleted;
+
+    deleted = 0;
+
     for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
-        if (i == option) {
+        if (i == option & events[i].array_postion != -1) {
             events[i].array_postion = -1;
             events_actived -= 1;
+            deleted = 1;
         }
     }
+    return deleted;
 }
 
 /*** BeginHeader checkEvents */

@@ -433,7 +433,7 @@ void setClock(unsigned long *time_in_sec, struct tm *time_pointer, int console);
 void setClock(unsigned long *time_in_sec, struct tm *time_pointer, int console) {
 
     // Set the RTC time
-    write_rtc(time_in_sec);
+    write_rtc(*time_in_sec);
 
     *time_in_sec = mktime(time_pointer);
 
