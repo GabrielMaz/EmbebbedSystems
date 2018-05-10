@@ -39,24 +39,29 @@ cofunc void printEvents() {
 
     CLEAR_SCREEN();
 
-    printf("Listado de eventos:\n\n");
+    if (events_actived == 0) {
+        printf("No hay eventos para mostrar\n\n");
 
-    for (i = 0; i < MAX_NUMBER_EVENTS; i++){
-        event = events[i];
+    } else {
+        printf("Listado de eventos:\n\n");
 
-        if (event.array_postion != -1) {
-            printf("-------- %d --------\n\n", i+1);
-            printf("Nombre: ");
-            printEventData(event.name);
-            printf("\n\n");
-            printf("Leds: ");
-            printEventData(event.leds);
-            printf("\n\n");
-            displayHourUI(event.time);
-            printf("\n");
+        for (i = 0; i < MAX_NUMBER_EVENTS; i++){
+            event = events[i];
+
+            if (event.array_postion != -1) {
+                printf("-------- %d --------\n\n", i+1);
+                printf("Nombre: ");
+                printEventData(event.name);
+                printf("\n\n");
+                printf("Leds: ");
+                printEventData(event.leds);
+                printf("\n\n");
+                displayHourUI(event.time, 1);
+                printf("\n");
+            }
         }
-    }
-    printf("\n\n");
+        printf("\n\n");
+    }    
 }
 
 /*** BeginHeader printEventData */
@@ -83,20 +88,25 @@ cofunc void printEventsEthernet() {
     int i;
     char result[80];
 
-    printEthernet("\n\nListado de eventos:\n\n");
+    if (events_actived == 0) {
+        printEthernet("No hay eventos programados\n\n");
 
-    for (i = 0; i < MAX_NUMBER_EVENTS; i++){
-        event = events[i];
+    } else {
+        printEthernet("Listado de eventos:\n\n");
 
-        if (event.array_postion != -1) {
-            sprintf(result, "-------- %d --------\n\nNombre: ", i+1);
-            printEventDataEthernet(event.name, result);
-            strcat(result, "\n\nLeds:");
-            printEventDataEthernet(event.leds, result);
-            strcat(result, "\n");
-            printEthernet(result);
-            displayHourUI(event.time, 0);
-        }
+        for (i = 0; i < MAX_NUMBER_EVENTS; i++){
+            event = events[i];
+
+            if (event.array_postion != -1) {
+                sprintf(result, "-------- %d --------\n\nNombre: ", i+1);
+                printEventDataEthernet(event.name, result);
+                strcat(result, "\n\nLeds:");
+                printEventLedsEthernet(event.leds, result);
+                strcat(result, "\n");
+                printEthernet(result);
+                displayHourUI(event.time, 0);
+            }
+        }        
     }
 }
 
@@ -110,10 +120,32 @@ void printEventDataEthernet(char data[], char resultEthernet[]) {
 
     i = 0;
 
-    while((data[i]) != '\0'){
+    //while((data[i]) == 0x30 | (data[i]) == 0x31){
+    while((data[i]) != '\0'){ 
         result[i] = data[i];
         i++;
     }
+    strcat(resultEthernet, result);
+}
+
+/*** BeginHeader printEventLedsEthernet */
+void printEventLedsEthernet(char data[], char resultEthernet[]);
+/*** EndHeader */
+
+void printEventLedsEthernet(char data[], char resultEthernet[]) {
+    int i;
+    char result[12];
+
+    for (i = 0; i < 8; i++) {
+        result[i] = data[i];
+    }
+
+    /*//while((data[i]) == 0x30 | (data[i]) == 0x31){
+    while((data[i]) != '\0'){ 
+        result[i] = data[i];
+        i++;
+    }*/
+
     strcat(resultEthernet, result);
 }
 
@@ -124,43 +156,71 @@ cofunc void createEventUi(int console);
 cofunc void createEventUi(int console) {
     struct Event event, *event_pointer;
     struct tm time, *time_pointer;
-    int leds_validate;
+    int time_validated, date_validate;
 
     time_pointer = &time;
     event_pointer = &event;
 
-    CLEAR_SCREEN();
-
-    // Ask for a event name
-    wfd getEventName(&event.name, console);
-
-    // Ask for leds value
-    wfd getEventLeds(&event.leds, console);
-
-    // check if entered value belongs to the possible values
-    if (!validateEventLeds(&event.leds)) {
-        CLEAR_SCREEN();
-        printf("Por favor ingrese un dato valido\n\n");
-        abort;
-    }
-
-    if (console) {
-        // Ask for time and date
-        wfd askTimeHourData(&event.time, time_pointer, 1, 1);
-    } else {
-        wfd askTimeHourDataEthernet(&event.time, time_pointer, 1,1);
-    }
-
-    insertEvent(event_pointer);
+    time_validated = 1;
+    date_validate = 1;
 
     CLEAR_SCREEN();
 
-    if (console) {
-        printf("Su evento fue agregado a la lista de eventos programados\n\n");
+    if (events_actived == MAX_NUMBER_EVENTS) {
+        if (console) {
+            CLEAR_SCREEN();
+            printf("No hay espacio para mas eventos\n\n");
+
+        } else {
+            clearScreenEthernet();
+            printEthernet("No hay espacio para mas eventos\n\n");
+        }
+        
+
     } else {
-        printEthernet("\nSu evento fue agregado a la lista de eventos programados\n\n");
+            // Ask for a event name
+        wfd getEventName(&event.name, console);
+
+        // Ask for leds value
+        wfd getEventLeds(&event.leds, console);
+
+        // check if entered value belongs to the possible values
+        if (!validateEventLeds(&event.leds)) {
+            if (console) {
+                CLEAR_SCREEN();
+                printf("Por favor ingrese un dato valido\n\n");
+            
+            } else {
+                clearScreenEthernet();
+                printEthernet("Por favor ingrese un dato valido");
+            }
+            
+            abort;
+        }
+
+        if (console) {
+            // Ask for time and date
+            wfd askTimeHourData(&event.time, time_pointer, 1, 1);
+
+        } else {
+            wfd askTimeHourDataEthernet(&event.time, time_pointer, 1, 1, &time_validated, &date_validate);
+        }
+
+        if (!(time_validated & date_validate)) {
+            abort;
+        }
+
+        insertEvent(event_pointer);
+
+        if (console) {
+            CLEAR_SCREEN();
+            printf("Su evento fue agregado a la lista de eventos programados\n\n");
+
+        } else {
+            clearScreenEthernet();
+            printEthernet("Su evento fue agregado a la lista de eventos programados\n");
+        }
     }
-    setState(MENU);
 }
 
 /*** BeginHeader insertEvent */
@@ -243,6 +303,7 @@ cofunc void getEventLeds(char* leds, int console) {
         printf("\nPor favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: ");
 
         waitfor(getswf(leds));
+
     } else {
         printEthernet("\nPor favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: ");
         CLEAR_BUFFER();
@@ -310,10 +371,9 @@ cofunc void deleteEventUI();
 cofunc void deleteEventUI() {
     char data[4];
     int option, i;
-
+    
     printf("Ingrese numero de evento a eliminar: ");
     waitfor(getswf(data));
-
     option = converter(data) - 1;
 
     if (option < 0 | option > 5) {
@@ -324,7 +384,48 @@ cofunc void deleteEventUI() {
     deleteEvent(option);    
 
     CLEAR_SCREEN();
-    printf("Se elimino correctamente el evento\n\n");
+    printf("\nSe elimino correctamente el evento\n");
+}
+
+/*** BeginHeader deleteEventEthernetUI */
+cofunc void deleteEventEthernetUI();
+/*** EndHeader */
+
+cofunc void deleteEventEthernetUI() {
+    char data[4];
+    int option, i;
+
+    printEthernet("\nIngrese numero de evento a eliminar: ");
+    CLEAR_BUFFER();
+    while (tcp_tick(&socket)) {
+        sock_wait_input(&socket,0,NULL,&status);
+        if(sock_gets(&socket,buffer,2048)) {
+            option = converter(buffer) - 1;
+            CLEAR_BUFFER();
+            break;
+        }
+    }
+    
+    sock_err:
+    switch(status) {
+        case 1: /* foreign host closed */
+            printf("User closed session\n");
+            break;
+        case -1: /* time-out */
+            printf("Connection timed out\n");
+            break;
+    }
+
+    if (option < 0 | option > 5) {
+        clearScreenEthernet();
+        printEthernet("Por favor ingrese un dato valido\n\n");
+        abort;
+    }
+
+    deleteEvent(option);    
+
+    clearScreenEthernet();
+    printEthernet("Se elimino correctamente el evento\n\n");
 }
 
 /*** BeginHeader deleteEvent */

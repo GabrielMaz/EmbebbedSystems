@@ -28,7 +28,7 @@ void displayHourUI(unsigned long time_in_sec, int console) {
             time.tm_hour, time.tm_min, time.tm_sec);
     } else {
 
-        sprintf (result, "%02d/%02d/%04d %02d:%02d:%02d\n\n",
+        sprintf (result, "%02d/%02d/%04d %02d:%02d:%02d\n",
             time.tm_mday, time.tm_mon, 1900 + time.tm_year,
             time.tm_hour, time.tm_min, time.tm_sec);
 
@@ -61,9 +61,12 @@ cofunc void setDate(int console) {
     unsigned long time_in_sec;
     struct tm time, *time_pointer;
     char data[4];
-    int option;
+    int option, time_validated, date_validate;
 
     time_pointer = &time;
+
+    time_validated = 1;
+    date_validate = 1;
 
     if (console) {
         waitfor(getswf(data));
@@ -95,7 +98,7 @@ cofunc void setDate(int console) {
             if (console) {
                 wfd askTimeHourData(&time_in_sec, time_pointer, 1, 0);
             } else {
-                wfd askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 0);
+                wfd askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 0, &time_validated, &date_validate);
             }
             break;
 
@@ -103,7 +106,7 @@ cofunc void setDate(int console) {
             if (console) {
                 wfd askTimeHourData(&time_in_sec, time_pointer, 0, 1);
             } else {
-                wfd askTimeHourDataEthernet(&time_in_sec, time_pointer, 0, 1);
+                wfd askTimeHourDataEthernet(&time_in_sec, time_pointer, 0, 1, &time_validated, &date_validate);
             }
             break;
 
@@ -111,7 +114,7 @@ cofunc void setDate(int console) {
             if (console) {
                 wfd askTimeHourData(&time_in_sec, time_pointer, 1, 1);
             } else {
-                wfd askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 1);
+                wfd askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 1, &time_validated, &date_validate);
             }
             break;
 
@@ -139,6 +142,10 @@ cofunc void setDate(int console) {
             abort;
     }
 
+    if (!(time_validated & date_validate)) {
+        abort;
+    }
+
     setClock(&time_in_sec, time_pointer, console);
 }
 
@@ -161,19 +168,21 @@ cofunc void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer,
 }
 
 /*** BeginHeader askTimeHourDataEthernet */
-cofunc void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date);
+cofunc void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate);
 /*** EndHeader */
 
-cofunc void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date) {
+cofunc void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate) {
 
     if (ask_time) {
-        wfd getTimeEthernet(time_pointer);
+        wfd getTimeEthernet(time_pointer, time_validate);
     }
-    if (ask_date) {
-        wfd getDateEthernet(time_pointer);
+    if (ask_date & *time_validate) {
+        wfd getDateEthernet(time_pointer, date_validate);
     }
 
-    *time_in_sec = mktime(time_pointer);
+    if (*time_validate & *date_validate) {
+        *time_in_sec = mktime(time_pointer);
+    }
 }
 
 /*** BeginHeader getTime */
@@ -207,16 +216,16 @@ cofunc void getTime(struct tm *time_pointer) {
         (*time_pointer).tm_sec = sec_int;
     } else {
         CLEAR_SCREEN();
-        printf ("Datos de fecha invalidos\n\n");
+        printf ("Datos de hora invalidos\n\n");
         abort;
     }
 }
 
 /*** BeginHeader getTimeEthernet */
-cofunc void getTimeEthernet(struct tm *time_pointer);
+cofunc void getTimeEthernet(struct tm *time_pointer, int *time_validate);
 /*** EndHeader */
 
-cofunc void getTimeEthernet(struct tm *time_pointer) {
+cofunc void getTimeEthernet(struct tm *time_pointer, int *time_validate) {
     int hour_int, min_int, sec_int, validate;
 
     validate = 1;
@@ -269,11 +278,9 @@ cofunc void getTimeEthernet(struct tm *time_pointer) {
         (*time_pointer).tm_min = min_int;
         (*time_pointer).tm_sec = sec_int;
     } else {
-        while (tcp_tick(&socket)) {
-            clearScreenEthernet();
-            printEthernet("Datos de hora invalidos\n\n");
-            break;
-        }
+        clearScreenEthernet();
+        printEthernet("Datos de hora invalidos\n");
+        *time_validate = 0;
         abort;
     }
 }
@@ -330,17 +337,17 @@ cofunc void getDate(struct tm *time_pointer) {
         (*time_pointer).tm_mon = month_int;
         (*time_pointer).tm_year = year_int - 1900;
     } else {
-            CLEAR_SCREEN();
+        CLEAR_SCREEN();
         printf ("Datos de fecha invalidos\n\n");
         abort;
     }
 }
 
 /*** BeginHeader getDateEthernet */
-cofunc void getDateEthernet(struct tm *time_pointer);
+cofunc void getDateEthernet(struct tm *time_pointer, int *date_validate);
 /*** EndHeader */
 
-cofunc void getDateEthernet(struct tm *time_pointer) {
+cofunc void getDateEthernet(struct tm *time_pointer, int *date_validate) {
     int day_int, month_int, year_int, validate;
 
     validate = 1;
@@ -391,7 +398,8 @@ cofunc void getDateEthernet(struct tm *time_pointer) {
         (*time_pointer).tm_year = year_int - 1900;
     } else {
         clearScreenEthernet();
-        printEthernet("Datos de hora invalidos\n\n");
+        printEthernet("Datos de fecha invalidos\n");
+        *date_validate = 0;
         abort;
     }
 }

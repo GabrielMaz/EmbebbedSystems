@@ -15,6 +15,7 @@ void menuUI(int console) {
         printf("Menu: \n\n1 - Mostrar hora \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n");
         printf("6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2\n\n ");
         printf("Seleccione una opcion: ");
+
     } else {
         printEthernet("Menu: \n\n1 - Mostrar hora \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2 \n\nSeleccione una opcion: ");
     }
@@ -31,6 +32,7 @@ cofunc void optionSelected(int console) {
     if (console) {
         waitfor(getswf(data));
         option = converter(data);
+
     } else {
         while (tcp_tick(&socket)) {
             sock_wait_input(&socket,0,NULL,&status);
@@ -56,6 +58,7 @@ cofunc void optionSelected(int console) {
         case 1:
             if (console) {
                 CLEAR_SCREEN();
+
             } else {
                 clearScreenEthernet();
             }
@@ -66,6 +69,7 @@ cofunc void optionSelected(int console) {
         case 2:
             if (console) {
                 CLEAR_SCREEN();
+
             } else {
                 clearScreenEthernet();
             }
@@ -87,6 +91,7 @@ cofunc void optionSelected(int console) {
         case 6:
             if (console) {
                 CLEAR_SCREEN();
+
             } else {
                 clearScreenEthernet();
             }
@@ -97,6 +102,7 @@ cofunc void optionSelected(int console) {
         case 7:
             if (console) {
                 CLEAR_SCREEN();
+
             } else {
                 clearScreenEthernet();
             }
@@ -108,6 +114,7 @@ cofunc void optionSelected(int console) {
             if (console) {
                 CLEAR_SCREEN();
                 printf("Por favor seleccione una de las opciones posibles\n\n");
+
             } else {
                 clearScreenEthernet();
                 printEthernet("Por favor seleccione una de las opciones posibles\n\n");
@@ -204,32 +211,47 @@ cofunc void selectOption(int state, int console) {
             break;
 
         case LIST_EVENTS:
-            wfd printEventsEthernet();
+            if (console) {
+                wfd printEvents();
+
+            } else {
+                clearScreenEthernet();
+                wfd printEventsEthernet();
+            }
+            
             setState(MENU);
             break;
 
         case ADD_EVENT:
-            if (events_actived < MAX_NUMBER_EVENTS) {
-                wfd createEventUi(console);
-            } else {
-                CLEAR_SCREEN();
-                printf("No hay espacio para mas eventos\n\n");
-            }
+            wfd createEventUi(console);
             setState(MENU);
             break;
 
         case DELETE_EVENT:
             if (console) {
                 if (events_actived > 0) {
+                    wfd printEvents();
                     wfd deleteEventUI();
+                    wfd printEvents();
+
                 } else {
                     CLEAR_SCREEN();
                     printf("No hay eventos para eliminar\n\n");
                 }
+
             } else {
-                clearScreenEthernet();
+                if (events_actived > 0) {
+                    clearScreenEthernet();
+                    wfd printEventsEthernet();
+                    wfd deleteEventEthernetUI();
+                    clearScreenEthernet();
+                    wfd printEventsEthernet();
+                
+                } else {
+                    clearScreenEthernet();
+                    printEthernet("No hay eventos para eliminar\n");
+                }
             }
-            wfd printEvents(console);
             
             setState(MENU);
             break;

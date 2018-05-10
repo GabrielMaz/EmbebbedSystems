@@ -54,7 +54,7 @@ void clearScreenEthernet();
 
 void clearScreenEthernet() {
     if (tcp_tick(&socket)) {
-        sprintf(buffer, "\n\n");
+        sprintf(buffer, "\n\n****************************************\n");
         sock_puts(&socket,buffer);
         CLEAR_BUFFER();
     }
