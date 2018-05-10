@@ -116,13 +116,16 @@ void printEventDataEthernet(char data[], char resultEthernet[]);
 
 void printEventDataEthernet(char data[], char resultEthernet[]) {
     int i;
-    char result[12];
+    char result[11];
 
     i = 0;
 
     while((data[i]) != '\0'){ 
         result[i] = data[i];
         i++;
+        if (i == 10) {
+            break;
+        }
     }
     strcat(resultEthernet, result);
 }
@@ -133,17 +136,11 @@ void printEventLedsEthernet(char data[], char resultEthernet[]);
 
 void printEventLedsEthernet(char data[], char resultEthernet[]) {
     int i;
-    char result[12];
+    char result[9];
 
     for (i = 0; i < 8; i++) {
         result[i] = data[i];
     }
-
-    /*//while((data[i]) == 0x30 | (data[i]) == 0x31){
-    while((data[i]) != '\0'){ 
-        result[i] = data[i];
-        i++;
-    }*/
 
     strcat(resultEthernet, result);
 }
@@ -166,8 +163,6 @@ cofunc void createEventUi(int console) {
     time_validated = 1;
     date_validate = 1;
 
-    CLEAR_SCREEN();
-
     if (events_actived == MAX_NUMBER_EVENTS) {
         if (console) {
             CLEAR_SCREEN();
@@ -177,7 +172,6 @@ cofunc void createEventUi(int console) {
             clearScreenEthernet();
             printEthernet("No hay espacio para mas eventos\n\n");
         }
-        
 
     } else {
             // Ask for a event name
@@ -378,8 +372,8 @@ cofunc void deleteEventUI() {
     waitfor(getswf(data));
     option = converter(data) - 1;
 
-    if (option < 0 | option > 5) {
-        printf("Por favor ingrese un dato valido\n\n");
+    if (option < 0 | option > MAX_NUMBER_EVENTS) {
+        printf("\nPor favor ingrese un dato valido\n\n");
         abort;
     }
 
@@ -387,6 +381,7 @@ cofunc void deleteEventUI() {
 
     if (deleteEvent(option)) {
         printf("\nSe elimino correctamente el evento\n");
+        setState(MENU);
 
     } else {
         printf("\nNo existe un evento con ese indice\n");
@@ -424,16 +419,18 @@ cofunc void deleteEventEthernetUI() {
 
     if (option < 0 | option > 5) {
         clearScreenEthernet();
-        printEthernet("Por favor ingrese un dato valido\n\n");
+        printEthernet("Por favor ingrese un dato valido ");
         abort;
     }
 
-    clearScreenEthernet();
-
     if (deleteEvent(option)) {
+        clearScreenEthernet();
         printEthernet("Se elimino correctamente el evento");
+        clearScreenEthernet();
+        setState(MENU);
 
     } else {
+        clearScreenEthernet();
         printEthernet("No existe un evento con ese indice");
     }    
 }

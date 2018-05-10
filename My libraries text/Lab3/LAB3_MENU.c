@@ -244,8 +244,6 @@ cofunc void selectOption(int state, int console) {
                     clearScreenEthernet();
                     wfd printEventsEthernet();
                     wfd deleteEventEthernetUI();
-                    clearScreenEthernet();
-                    wfd printEventsEthernet();
                 
                 } else {
                     clearScreenEthernet();
@@ -253,7 +251,6 @@ cofunc void selectOption(int state, int console) {
                 }
             }
             
-            setState(MENU);
             break;
         
         case ANALOG_INPUT_0:
