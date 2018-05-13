@@ -708,7 +708,6 @@ void checkEvents() {
                     & event_time.tm_hour == time.tm_hour & event_time.tm_min == time.tm_min & event_time.tm_sec == time.tm_sec) {
                     
                     WrPortI(PORT_A, getPortShadow(PORT_A), turnOnLeds(events[i].leds));
-                    //turnOnLeds(events[i].leds);
 
                     deleteEvent(events[i].array_postion);                    
                 }
@@ -724,12 +723,6 @@ int turnOnLeds(char *leds) {
 
     mask = 0x80;
     result = 0x00;
-
-    /*for (i=0; i<8; i++) {
-        if ((*(leds+i) - 0x30) == 1) {
-            BitWrPortI(PORT_A, getPortShadow(PORT_A), 1, i);
-        }
-    }*/
 
     for (i=0; i<8; i++) {
         if ((*(leds+i) - 0x30) == 1) {
