@@ -20,16 +20,15 @@ int current_state;
 
 /*** EndHeader */
 
-/*** BeginHeader init */
-void init();
+/*** BeginHeader initSystem */
+void initSystem();
 /*** EndHeader */
 
-void init() {
-    setState(MENU);
-    events_actived = 0;
+void initSystem() {
     configurePorts();
     initEvents();
     setState(MENU);
+    events_actived = 0;
 }
 
 /*** BeginHeader setState */

@@ -454,15 +454,16 @@ int deleteEvent(int option) {
     return deleted;
 }
 
-/*** BeginHeader checkEvents */
-void checkEvents();
+/*** BeginHeader checkEventsActivated */
+void checkEventsActivated();
 /*** EndHeader */
 
-void checkEvents() {
+void checkEventsActivated() {
     int i;
     struct tm time, *time_pointer, event_time, *event_time_pointer;
     unsigned long time_in_sec;
     int show;
+    char *shadow;
 
     time_in_sec = getRtcTime();
 
@@ -480,8 +481,10 @@ void checkEvents() {
 
                 if (event_time.tm_year == time.tm_year & event_time.tm_mon == time.tm_mon & event_time.tm_mday == time.tm_mday 
                     & event_time.tm_hour == time.tm_hour & event_time.tm_min == time.tm_min & event_time.tm_sec == time.tm_sec) {
+
+                    shadow = getPortShadow(PORT_A);
                     
-                    WrPortI(PORT_A, getPortShadow(PORT_A), turnOnLeds(events[i].leds));
+                    WrPortI(PORT_A, shadow, turnOnLeds(events[i].leds));
 
                     deleteEvent(events[i].array_postion);                    
                 }
