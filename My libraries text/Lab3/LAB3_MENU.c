@@ -35,11 +35,12 @@ cofunc void optionSelected(int console) {
 
     } else {
         while (tcp_tick(&socket)) {
-            sock_wait_input(&socket,0,NULL,&status);
             if(sock_gets(&socket,buffer,2048)) {
                 option = converter(buffer);
                 CLEAR_BUFFER();
                 break;
+            } else {
+                abort;
             }
         }
         
@@ -195,14 +196,18 @@ cofunc void selectOption(int state, int console);
 
 cofunc void selectOption(int state, int console) {
     switch(state){
-        case MENU:
+        case INITIAL:
             menuUI(console);
+            setState(MENU);
+            break;
+
+        case MENU:
             wfd optionSelected(console);
             break;
 
         case DISPLAY_HOUR:
             displayHourUI(getRtcTime(), console);
-            setState(MENU);
+            setState(INITIAL);
             break;
 
         case INPUT_HOUR:
@@ -219,12 +224,12 @@ cofunc void selectOption(int state, int console) {
                 wfd printEventsEthernet();
             }
             
-            setState(MENU);
+            setState(INITIAL);
             break;
 
         case ADD_EVENT:
             wfd createEventUi(console);
-            setState(MENU);
+            setState(INITIAL);
             break;
 
         case DELETE_EVENT:
@@ -256,13 +261,13 @@ cofunc void selectOption(int state, int console) {
         case ANALOG_INPUT_0:
             getAnalogInput(0, console);
             delayMS(PIC_TIMEOUT);
-            setState(MENU);
+            setState(INITIAL);
             break;
 
         case ANALOG_INPUT_1:
             getAnalogInput(1, console);
             delayMS(PIC_TIMEOUT);
-            setState(MENU);
+            setState(INITIAL);
             break;
     }
 }

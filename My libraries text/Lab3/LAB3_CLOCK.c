@@ -73,10 +73,8 @@ cofunc void setDate(int console) {
         option = converter(data);
     } else {
         while (tcp_tick(&socket)) {
-            sock_wait_input(&socket,0,NULL,&status);
             if(sock_gets(&socket,buffer,2048)) {
                 option = converter(buffer);
-                //data[0] = buffer[0];
                 CLEAR_BUFFER();
                 break;
             }
@@ -126,7 +124,7 @@ cofunc void setDate(int console) {
                 clearScreenEthernet();
             }
 
-        	setState(MENU);
+        	setState(INITIAL);
             abort;
             break;
 

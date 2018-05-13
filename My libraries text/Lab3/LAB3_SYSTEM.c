@@ -1,6 +1,8 @@
 /*** BeginHeader */
 
 #define CLEAR_SCREEN() (printf(" \x1Bt"));
+#define CONSOLE 1
+#define ETHERNET 0
 
 #use LAB3_IO.LIB
 #use LAB3_EVENT.LIB
@@ -13,7 +15,8 @@ enum STATE {
     ADD_EVENT = 4,
     DELETE_EVENT = 5,
     ANALOG_INPUT_0 = 6,
-    ANALOG_INPUT_1 = 7
+    ANALOG_INPUT_1 = 7,
+    INITIAL = 8
 };
 
 int current_state;
@@ -27,7 +30,7 @@ void initSystem();
 void initSystem() {
     configurePorts();
     initEvents();
-    setState(MENU);
+    setState(INITIAL);
     events_actived = 0;
 }
 
