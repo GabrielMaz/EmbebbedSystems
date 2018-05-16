@@ -17,9 +17,12 @@ void main () {
     current_state = getState();
 
     while (1) {
-        tcp_tick(&socket);
 
-        // 1.1
+        costate {
+            tcp_tick(&socket);
+        }
+        
+        // Red led
         costate {
             waitfor(DelayMs(800));
             setOutput(PORT_E, BIT_5, 1);
@@ -27,18 +30,17 @@ void main () {
             setOutput(PORT_E, BIT_5, 0);
         }
 
-        // 1.2
+        // Console menu
         /*costate {
             wfd selectOption(current_state, CONSOLE);
         }*/
 
-        // Ethernet
+        // Ethernet menu
         costate {
-            printf("%d - costate\n", current_state);
             wfd selectOption(current_state, ETHERNET);
         }
 
-        // 1.3
+        // Check for events
         costate {
             checkEventsActivated();
         }

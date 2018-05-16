@@ -1,3 +1,9 @@
+/*** BeginHeader */
+
+#use LAB3_SYSTEM.LIB
+
+/*** EndHeader */
+
 /*** BeginHeader getRtcTime */
 unsigned long getRtcTime();
 /*** EndHeader */
@@ -47,7 +53,6 @@ void inputHourUI(int console) {
         printf("Cambiar fecha y hora \n\n1 - Cambiar hora \n\n2 - Cambiar fecha \n\n3 - Cambiar fecha y hora \n\n4 - Volver \n\n");
         printf("Seleccione una opcion: ");
     } else {
-        tcp_tick(&socket);
         printEthernet("Cambiar fecha y hora \n\n1 - Cambiar hora \n\n2 - Cambiar fecha \n\n3 - Cambiar fecha y hora \n\n4 - Volver \n\nSeleccione una opcion: ");
     }
     
@@ -78,6 +83,7 @@ cofunc void setDate(int console) {
                 CLEAR_BUFFER();
                 break;
             }
+            waitfor(DelayMs(100));
         }
         sock_err:
         switch(status)
@@ -224,41 +230,58 @@ cofunc void getTimeEthernet(struct tm *time_pointer, int *time_validate);
 /*** EndHeader */
 
 cofunc void getTimeEthernet(struct tm *time_pointer, int *time_validate) {
-    int hour_int, min_int, sec_int, validate;
+    int hour_int, min_int, sec_int, validate, state, printed, exit_while;
 
     validate = 1;
+    state = 1;
+    printed = 0;
+    exit_while = 0;
 
     CLEAR_BUFFER();
 
-    // Ask for time
     while (tcp_tick(&socket)) {
-        printEthernet("\nIngrese hora: ");
-        sock_wait_input(&socket,0,NULL,&status);
-        if(sock_gets(&socket,buffer,2048)) {
-            hour_int = converter(buffer);
-            CLEAR_BUFFER();
+        switch (state) {
+            case 1:
+                if (!printed) {
+                    printEthernet("\nIngrese hora: ");
+                    printed = 1;
+                }
+
+                if(sock_gets(&socket,buffer,2048)) {
+                    hour_int = converter(buffer);
+                    CLEAR_BUFFER();
+                    state = 2;
+                    printed = 0;
+                }
+            
+            case 2:
+                if (!printed) {
+                    printEthernet("\nIngrese minutos: ");
+                    printed = 1;
+                }
+
+                if(sock_gets(&socket,buffer,2048)) {
+                    min_int = converter(buffer);
+                    CLEAR_BUFFER();
+                    state = 3;
+                    printed = 0;
+                }
+
+            case 3:
+                if (!printed) {
+                    printEthernet("\nIngrese segundos: ");
+                    printed = 1;
+                }
+                if(sock_gets(&socket,buffer,2048)) {
+                    sec_int = converter(buffer);
+                    CLEAR_BUFFER();
+                    exit_while = 1;
+                }
+        }
+        if (exit_while) {
             break;
         }
-    }
-    
-    while (tcp_tick(&socket)) {
-        printEthernet("\nIngrese minutos: ");
-        sock_wait_input(&socket,0,NULL,&status);
-        if(sock_gets(&socket,buffer,2048)) {
-            min_int = converter(buffer);
-            CLEAR_BUFFER();
-            break;
-        }
-    }
-    
-    while (tcp_tick(&socket)) {
-        printEthernet("\nIngrese segundos: ");
-        sock_wait_input(&socket,0,NULL,&status);
-        if(sock_gets(&socket,buffer,2048)) {
-            sec_int = converter(buffer);
-            CLEAR_BUFFER();
-            break;
-        }
+        waitfor(DelayMs(100));
     }
     
     sock_err:
@@ -346,38 +369,58 @@ cofunc void getDateEthernet(struct tm *time_pointer, int *date_validate);
 /*** EndHeader */
 
 cofunc void getDateEthernet(struct tm *time_pointer, int *date_validate) {
-    int day_int, month_int, year_int, validate;
+    int day_int, month_int, year_int, validate, state, printed, exit_while;
 
     validate = 1;
+    state = 1;
+    printed = 0;
+    exit_while = 0;
 
-    // Ask for date
-    printEthernet("\nIngrese dia: ");
     while (tcp_tick(&socket)) {
-        sock_wait_input(&socket,0,NULL,&status);
-        if(sock_gets(&socket,buffer,2048)) {
-            day_int = converter(buffer);
-            CLEAR_BUFFER();
+        switch (state) {
+            case 1:
+                if (!printed) {
+                    printEthernet("\nIngrese dia: ");
+                    printed = 1;
+                }
+
+                if(sock_gets(&socket,buffer,2048)) {
+                    day_int = converter(buffer);
+                    CLEAR_BUFFER();
+                    state = 2;
+                    printed = 0;
+                }
+            
+            case 2:
+                if (!printed) {
+                    printEthernet("\nIngrese mes: ");
+                    printed = 1;
+                }
+
+                if(sock_gets(&socket,buffer,2048)) {
+                    month_int = converter(buffer);
+                    CLEAR_BUFFER();
+                    state = 3;
+                    printed = 0;
+                }
+
+            case 3:
+                if (!printed) {
+                    printEthernet("\nIngrese anio: ");
+                    printed = 1;
+                }
+                if(sock_gets(&socket,buffer,2048)) {
+                    year_int = converter(buffer);
+                    CLEAR_BUFFER();
+                    exit_while = 1;
+                }
+        }
+
+        if (exit_while) {
             break;
         }
-    }
-    
-    printEthernet("\nIngrese mes: ");
-    while (tcp_tick(&socket)) {
-        sock_wait_input(&socket,0,NULL,&status);
-        if(sock_gets(&socket,buffer,2048)) {
-            month_int = converter(buffer);
-            CLEAR_BUFFER();
-            break;
-        }
-    }
-    printEthernet("\nIngrese anio: ");
-    while (tcp_tick(&socket)) {
-        sock_wait_input(&socket,0,NULL,&status);
-        if(sock_gets(&socket,buffer,2048)) {
-            year_int = converter(buffer);
-            CLEAR_BUFFER();
-            break;
-        }
+        
+        waitfor(DelayMs(100));
     }
 
     sock_err:

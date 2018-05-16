@@ -1,6 +1,8 @@
 /*** BeginHeader */
 
 #define CLEAR_SCREEN() (printf(" \x1Bt"));
+#define WAIT() (semaphore -= 1);
+#define SIGNAL() (semaphore += 1);
 #define CONSOLE 1
 #define ETHERNET 0
 
@@ -20,6 +22,7 @@ enum STATE {
 };
 
 int current_state;
+int semaphore;
 
 /*** EndHeader */
 
@@ -32,6 +35,7 @@ void initSystem() {
     initEvents();
     setState(INITIAL);
     events_actived = 0;
+    semaphore = 1;
 }
 
 /*** BeginHeader setState */
@@ -51,10 +55,10 @@ enum STATE getState() {
 }
 
 /*** BeginHeader delayMS */
-void delayMS(int ms_delay);
+cofunc void delayMS(int ms_delay);
 /*** EndHeader */
 
-void delayMS(int ms_delay) {
+cofunc void delayMS(int ms_delay) {
     auto unsigned long t0;
 
     // ms timer is updated by rabbit

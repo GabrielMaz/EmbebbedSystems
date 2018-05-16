@@ -1,5 +1,6 @@
 /*** BeginHeader */
 
+#use LAB3_SYSTEM.LIB
 #use LAB3_ETHERNET.LIB
 
 #define MAX_NUMBER_EVENTS 7
@@ -214,7 +215,8 @@ cofunc void createEventUi(int console) {
 
         } else {
             clearScreenEthernet();
-            printEthernet("Su evento fue agregado a la lista de eventos programados\n");
+            printEthernet("Su evento fue agregado a la lista de eventos programados");
+            clearScreenEthernet();
         }
     }
 }
@@ -226,6 +228,9 @@ void insertEvent(struct Event *event);
 void insertEvent(struct Event *event) {
     int i;
 
+    while (!semaphore);
+    WAIT();
+
     for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
         if (events[i].array_postion == -1) {
             (*event).array_postion = i;
@@ -234,6 +239,8 @@ void insertEvent(struct Event *event) {
             break;
         }
     }
+
+    SIGNAL();
 }
 
 /*** BeginHeader getEventName */
@@ -381,7 +388,6 @@ cofunc void deleteEventUI() {
 
     if (deleteEvent(option)) {
         printf("\nSe elimino correctamente el evento\n");
-        setState(MENU);
 
     } else {
         printf("\nNo existe un evento con ese indice\n");
@@ -426,8 +432,6 @@ cofunc void deleteEventEthernetUI() {
     if (deleteEvent(option)) {
         clearScreenEthernet();
         printEthernet("Se elimino correctamente el evento");
-        clearScreenEthernet();
-        setState(MENU);
 
     } else {
         clearScreenEthernet();
@@ -444,6 +448,9 @@ int deleteEvent(int option) {
 
     deleted = 0;
 
+    while (!semaphore);
+    WAIT();
+
     for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
         if (i == option & events[i].array_postion != -1) {
             events[i].array_postion = -1;
@@ -451,6 +458,9 @@ int deleteEvent(int option) {
             deleted = 1;
         }
     }
+
+    SIGNAL();
+
     return deleted;
 }
 

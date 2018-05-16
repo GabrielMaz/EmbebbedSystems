@@ -254,19 +254,22 @@ cofunc void selectOption(int state, int console) {
                     clearScreenEthernet();
                     printEthernet("No hay eventos para eliminar\n");
                 }
+                clearScreenEthernet();
             }
+
+            setState(INITIAL);
             
             break;
         
         case ANALOG_INPUT_0:
             getAnalogInput(0, console);
-            delayMS(PIC_TIMEOUT);
+            wfd delayMS(PIC_TIMEOUT);
             setState(INITIAL);
             break;
 
         case ANALOG_INPUT_1:
             getAnalogInput(1, console);
-            delayMS(PIC_TIMEOUT);
+            wfd delayMS(PIC_TIMEOUT);
             setState(INITIAL);
             break;
     }
