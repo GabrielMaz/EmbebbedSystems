@@ -31,10 +31,10 @@ void initEvents() {
 }
 
 /*** BeginHeader printEvents */
-cofunc void printEvents();
+void printEvents();
 /*** EndHeader */
 
-cofunc void printEvents() {
+void printEvents() {
     struct Event event;
     int i;
 
@@ -81,10 +81,10 @@ void printEventData(char data[]) {
 }
 
 /*** BeginHeader printEventsEthernet */
-cofunc void printEventsEthernet();
+void printEventsEthernet();
 /*** EndHeader */
 
-cofunc void printEventsEthernet() {
+void printEventsEthernet() {
     struct Event event;
     int i;
     char result[80];
@@ -147,10 +147,10 @@ void printEventLedsEthernet(char data[], char resultEthernet[]) {
 }
 
 /*** BeginHeader createEventUi */
-cofunc void createEventUi(int console);
+void createEventUi(int console);
 /*** EndHeader */
 
-cofunc void createEventUi(int console) {
+void createEventUi(int console) {
     struct Event event, *event_pointer;
     struct tm time, *time_pointer;
     int time_validated, date_validate;
@@ -244,10 +244,10 @@ void insertEvent(struct Event *event) {
 }
 
 /*** BeginHeader getEventName */
-cofunc void getEventName(char *name, int console);
+void getEventName(char *name, int console);
 /*** EndHeader */
 
-cofunc void getEventName(char *name, int console) {
+void getEventName(char *name, int console) {
 
     if (console) {
         printf("\nPor favor ingrese un nombre para el evento (maximo 10 caracteres): ");
@@ -297,10 +297,10 @@ char getStringName(char *name) {
 }
 
 /*** BeginHeader getEventLeds */
-cofunc void getEventLeds(char* leds, int console);
+void getEventLeds(char* leds, int console);
 /*** EndHeader */
 
-cofunc void getEventLeds(char* leds, int console) {
+void getEventLeds(char* leds, int console) {
 
     if (console) {
         printf("\nPor favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: ");
@@ -368,10 +368,10 @@ int validateEventLeds(char *leds) {
 }
 
 /*** BeginHeader deleteEventUI */
-cofunc void deleteEventUI();
+void deleteEventUI();
 /*** EndHeader */
 
-cofunc void deleteEventUI() {
+void deleteEventUI() {
     char data[4];
     int option, i;
     
@@ -395,10 +395,10 @@ cofunc void deleteEventUI() {
 }
 
 /*** BeginHeader deleteEventEthernetUI */
-cofunc void deleteEventEthernetUI();
+void deleteEventEthernetUI();
 /*** EndHeader */
 
-cofunc void deleteEventEthernetUI() {
+void deleteEventEthernetUI() {
     char data[4];
     int option, i;
 

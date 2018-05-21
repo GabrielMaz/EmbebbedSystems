@@ -22,10 +22,10 @@ void menuUI(int console) {
 }
 
 /*** BeginHeader optionSelected */
-cofunc void optionSelected(int console);
+void optionSelected(int console);
 /*** EndHeader */
 
-cofunc void optionSelected(int console) {
+void optionSelected(int console) {
     char data[4];
     int option;
 
@@ -191,10 +191,10 @@ int multipleOfTwo(int multiple) {
 }
 
 /*** BeginHeader selectOption */
-cofunc void selectOption(int state, int console);
+void selectOption(int state, int console);
 /*** EndHeader */
 
-cofunc void selectOption[MAX_INTERFACES](int state, int console) {
+void selectOption[MAX_INTERFACES](int state, int console) {
     switch(state){
         case INITIAL:
             menuUI(console);

@@ -59,10 +59,10 @@ void inputHourUI(int console) {
 }
 
 /*** BeginHeader setDate */
-cofunc void setDate(int console);
+void setDate(int console);
 /*** EndHeader */
 
-cofunc void setDate(int console) {
+void setDate(int console) {
     unsigned long time_in_sec;
     struct tm time, *time_pointer;
     char data[4];
@@ -154,10 +154,10 @@ cofunc void setDate(int console) {
 }
 
 /*** BeginHeader askTimeHourData */
-cofunc void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date);
+void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date);
 /*** EndHeader */
 
-cofunc void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date) {
+void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date) {
 
     printf("\n");
 
@@ -172,10 +172,10 @@ cofunc void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer,
 }
 
 /*** BeginHeader askTimeHourDataEthernet */
-cofunc void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate);
+void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate);
 /*** EndHeader */
 
-cofunc void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate) {
+void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate) {
 
     if (ask_time) {
         wfd getTimeEthernet(time_pointer, time_validate);
@@ -190,10 +190,10 @@ cofunc void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_
 }
 
 /*** BeginHeader getTime */
-cofunc void getTime(struct tm *time_pointer);
+void getTime(struct tm *time_pointer);
 /*** EndHeader */
 
-cofunc void getTime(struct tm *time_pointer) {
+void getTime(struct tm *time_pointer) {
     char hour[10];
 	char min[10];
 	char sec[10];
@@ -226,10 +226,10 @@ cofunc void getTime(struct tm *time_pointer) {
 }
 
 /*** BeginHeader getTimeEthernet */
-cofunc void getTimeEthernet(struct tm *time_pointer, int *time_validate);
+void getTimeEthernet(struct tm *time_pointer, int *time_validate);
 /*** EndHeader */
 
-cofunc void getTimeEthernet(struct tm *time_pointer, int *time_validate) {
+void getTimeEthernet(struct tm *time_pointer, int *time_validate) {
     int hour_int, min_int, sec_int, validate, state, printed, exit_while;
 
     validate = 1;
@@ -329,10 +329,10 @@ int validateTime(int hour_int, int min_int, int sec_int) {
 }
 
 /*** BeginHeader getDate */
-cofunc void getDate(struct tm *time_pointer);
+void getDate(struct tm *time_pointer);
 /*** EndHeader */
 
-cofunc void getDate(struct tm *time_pointer) {
+void getDate(struct tm *time_pointer) {
     char day[10];
 	char month[10];
 	char year[10];
@@ -365,10 +365,10 @@ cofunc void getDate(struct tm *time_pointer) {
 }
 
 /*** BeginHeader getDateEthernet */
-cofunc void getDateEthernet(struct tm *time_pointer, int *date_validate);
+void getDateEthernet(struct tm *time_pointer, int *date_validate);
 /*** EndHeader */
 
-cofunc void getDateEthernet(struct tm *time_pointer, int *date_validate) {
+void getDateEthernet(struct tm *time_pointer, int *date_validate) {
     int day_int, month_int, year_int, validate, state, printed, exit_while;
 
     validate = 1;

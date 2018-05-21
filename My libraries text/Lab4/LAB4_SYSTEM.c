@@ -56,10 +56,10 @@ enum STATE getState() {
 }
 
 /*** BeginHeader delayMS */
-cofunc void delayMS(int ms_delay);
+void delayMS(int ms_delay);
 /*** EndHeader */
 
-cofunc void delayMS(int ms_delay) {
+void delayMS(int ms_delay) {
     auto unsigned long t0;
 
     // ms timer is updated by rabbit
