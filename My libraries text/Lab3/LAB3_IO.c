@@ -33,10 +33,10 @@ void configurePorts(){
 }
 
 /*** BeginHeader getPortShadow */
-char getPortShadow(enum portName p_port);
+char* getPortShadow(enum portName p_port);
 /*** EndHeader */
 
-char getPortShadow(enum portName p_port) {
+char* getPortShadow(enum portName p_port) {
     switch(p_port){
         case PORT_A:
             return &PADRShadow;
