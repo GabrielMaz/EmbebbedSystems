@@ -194,7 +194,7 @@ int multipleOfTwo(int multiple) {
 cofunc void selectOption(int state, int console);
 /*** EndHeader */
 
-cofunc void selectOption(int state, int console) {
+cofunc void selectOption[MAX_INTERFACES](int state, int console) {
     switch(state){
         case INITIAL:
             menuUI(console);

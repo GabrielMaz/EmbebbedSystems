@@ -32,12 +32,12 @@ void main () {
 
         // Console menu
         /*costate {
-            wfd selectOption(current_state, CONSOLE);
+            wfd selectOption[0](current_state, CONSOLE);
         }*/
 
         // Ethernet menu
         costate {
-            wfd selectOption(current_state, ETHERNET);
+            wfd selectOption[1](current_state, ETHERNET);
         }
 
         // Check for events

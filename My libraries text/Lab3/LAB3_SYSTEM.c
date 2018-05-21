@@ -5,6 +5,7 @@
 #define SIGNAL() (semaphore += 1);
 #define CONSOLE 1
 #define ETHERNET 0
+#define MAX_INTERFACES 2
 
 #use LAB3_IO.LIB
 #use LAB3_EVENT.LIB
