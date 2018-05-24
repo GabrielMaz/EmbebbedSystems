@@ -7,9 +7,7 @@
 #use LAB3_ETHERNET.LIB
 
 void main () {
-    char buffer[2048];
-	int status;
-
+    
     initSystem();
     
     initSocket();
