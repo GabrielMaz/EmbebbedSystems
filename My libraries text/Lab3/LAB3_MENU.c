@@ -35,8 +35,8 @@ cofunc void optionSelected(int console) {
 
     } else {
         while (tcp_tick(&socket)) {
-            if(sock_gets(&socket,buffer,2048)) {
-                option = converter(buffer);
+            if(sock_gets(&socket,buffer_msg,250)) {
+                option = converter(buffer_msg);
                 CLEAR_BUFFER();
                 break;
             } else {
@@ -191,7 +191,7 @@ int multipleOfTwo(int multiple) {
 }
 
 /*** BeginHeader selectOption */
-cofunc void selectOption(int state, int console);
+cofunc void selectOption[MAX_INTERFACES](int state, int console);
 /*** EndHeader */
 
 cofunc void selectOption[MAX_INTERFACES](int state, int console) {

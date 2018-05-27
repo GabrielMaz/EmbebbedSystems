@@ -260,8 +260,8 @@ cofunc void getEventName(char *name, int console) {
         CLEAR_BUFFER();
         while (tcp_tick(&socket)) {
             sock_wait_input(&socket,0,NULL,&status);
-            if(sock_gets(&socket,buffer,2048)) {
-                strcpy(name, buffer);
+            if(sock_gets(&socket,buffer_msg,250)) {
+                strcpy(name, buffer_msg);
                 CLEAR_BUFFER();
                 break;
             }
@@ -312,8 +312,8 @@ cofunc void getEventLeds(char* leds, int console) {
         CLEAR_BUFFER();
         while (tcp_tick(&socket)) {
             sock_wait_input(&socket,0,NULL,&status);
-            if(sock_gets(&socket,buffer,2048)) {
-                strcpy(leds, buffer);
+            if(sock_gets(&socket,buffer_msg,250)) {
+                strcpy(leds, buffer_msg);
                 CLEAR_BUFFER();
                 break;
             }
@@ -406,8 +406,8 @@ cofunc void deleteEventEthernetUI() {
     CLEAR_BUFFER();
     while (tcp_tick(&socket)) {
         sock_wait_input(&socket,0,NULL,&status);
-        if(sock_gets(&socket,buffer,2048)) {
-            option = converter(buffer) - 1;
+        if(sock_gets(&socket,buffer_msg,250)) {
+            option = converter(buffer_msg) - 1;
             CLEAR_BUFFER();
             break;
         }

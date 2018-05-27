@@ -78,8 +78,8 @@ cofunc void setDate(int console) {
         option = converter(data);
     } else {
         while (tcp_tick(&socket)) {
-            if(sock_gets(&socket,buffer,2048)) {
-                option = converter(buffer);
+            if(sock_gets(&socket,buffer_msg,250)) {
+                option = converter(buffer_msg);
                 CLEAR_BUFFER();
                 break;
             }
@@ -247,8 +247,8 @@ cofunc void getTimeEthernet(struct tm *time_pointer, int *time_validate) {
                     printed = 1;
                 }
 
-                if(sock_gets(&socket,buffer,2048)) {
-                    hour_int = converter(buffer);
+                if(sock_gets(&socket,buffer_msg,250)) {
+                    hour_int = converter(buffer_msg);
                     CLEAR_BUFFER();
                     state = 2;
                     printed = 0;
@@ -260,8 +260,8 @@ cofunc void getTimeEthernet(struct tm *time_pointer, int *time_validate) {
                     printed = 1;
                 }
 
-                if(sock_gets(&socket,buffer,2048)) {
-                    min_int = converter(buffer);
+                if(sock_gets(&socket,buffer_msg,250)) {
+                    min_int = converter(buffer_msg);
                     CLEAR_BUFFER();
                     state = 3;
                     printed = 0;
@@ -272,8 +272,8 @@ cofunc void getTimeEthernet(struct tm *time_pointer, int *time_validate) {
                     printEthernet("\nIngrese segundos: ");
                     printed = 1;
                 }
-                if(sock_gets(&socket,buffer,2048)) {
-                    sec_int = converter(buffer);
+                if(sock_gets(&socket,buffer_msg,250)) {
+                    sec_int = converter(buffer_msg);
                     CLEAR_BUFFER();
                     exit_while = 1;
                 }
@@ -384,8 +384,8 @@ cofunc void getDateEthernet(struct tm *time_pointer, int *date_validate) {
                     printed = 1;
                 }
 
-                if(sock_gets(&socket,buffer,2048)) {
-                    day_int = converter(buffer);
+                if(sock_gets(&socket,buffer_msg,250)) {
+                    day_int = converter(buffer_msg);
                     CLEAR_BUFFER();
                     state = 2;
                     printed = 0;
@@ -397,8 +397,8 @@ cofunc void getDateEthernet(struct tm *time_pointer, int *date_validate) {
                     printed = 1;
                 }
 
-                if(sock_gets(&socket,buffer,2048)) {
-                    month_int = converter(buffer);
+                if(sock_gets(&socket,buffer_msg,250)) {
+                    month_int = converter(buffer_msg);
                     CLEAR_BUFFER();
                     state = 3;
                     printed = 0;
@@ -409,8 +409,8 @@ cofunc void getDateEthernet(struct tm *time_pointer, int *date_validate) {
                     printEthernet("\nIngrese anio: ");
                     printed = 1;
                 }
-                if(sock_gets(&socket,buffer,2048)) {
-                    year_int = converter(buffer);
+                if(sock_gets(&socket,buffer_msg,250)) {
+                    year_int = converter(buffer_msg);
                     CLEAR_BUFFER();
                     exit_while = 1;
                 }
