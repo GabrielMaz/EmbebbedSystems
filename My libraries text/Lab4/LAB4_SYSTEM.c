@@ -1,14 +1,12 @@
 /*** BeginHeader */
 
 #define CLEAR_SCREEN() (printf(" \x1Bt"));
-#define WAIT() (semaphore -= 1);
-#define SIGNAL() (semaphore += 1);
 #define CONSOLE 1
 #define ETHERNET 0
 #define MAX_INTERFACES 2
 
-#use LAB3_IO.LIB
-#use LAB3_EVENT.LIB
+#use LAB4_IO.LIB
+#use LAB4_EVENT.LIB
 
 enum STATE {
     MENU = 0,
@@ -23,7 +21,6 @@ enum STATE {
 };
 
 int current_state;
-int semaphore;
 
 /*** EndHeader */
 
@@ -36,7 +33,6 @@ void initSystem() {
     initEvents();
     setState(INITIAL);
     events_actived = 0;
-    semaphore = 1;
 }
 
 /*** BeginHeader setState */
