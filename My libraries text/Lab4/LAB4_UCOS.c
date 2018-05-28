@@ -1,5 +1,7 @@
 /*** BeginHeader */
 
+#define DELAY100MS() (ucosDelay(0, 0, 0, 100));
+
 #use "ucos2.lib"
 
 OS_EVENT        *randomSem;
