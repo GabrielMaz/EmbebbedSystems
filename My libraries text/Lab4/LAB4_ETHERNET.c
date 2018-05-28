@@ -9,7 +9,7 @@
 
 #define CONNECTION_DIM 50
 
-#define CLEAR_BUFFER() (memset(&buffer, '\0', 2048));
+#define CLEAR_BUFFER() (memset(&buffer_msg, '\0', 250));
 
 #memmap xmem
 #use "dcrtcp.lib"
@@ -18,6 +18,7 @@
 
 tcp_Socket socket;
 char buffer[2048];
+char buffer_msg[250];
 int status;
 
 /*** EndHeader */
@@ -54,8 +55,8 @@ void clearScreenEthernet();
 
 void clearScreenEthernet() {
     if (tcp_tick(&socket)) {
-        sprintf(buffer, "\n\n****************************************\n");
-        sock_puts(&socket,buffer);
+        sprintf(buffer_msg, "\n\n****************************************\n");
+        sock_puts(&socket,buffer_msg);
         CLEAR_BUFFER();
     }
 }
@@ -66,8 +67,8 @@ void printEthernet();
 
 void printEthernet(char *message) {
     if (tcp_tick(&socket)) {
-        sprintf(buffer, message);
-        sock_puts(&socket,buffer);
+        sprintf(buffer_msg, message);
+        sock_puts(&socket,buffer_msg);
         CLEAR_BUFFER();
     }
 }
