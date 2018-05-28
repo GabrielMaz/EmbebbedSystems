@@ -1,6 +1,7 @@
 /*** BeginHeader */
 
-#use LAB3_SYSTEM.LIB
+#use LAB4_SYSTEM.LIB
+#use LAB4_UCOS.LIB
 
 /*** EndHeader */
 
@@ -74,17 +75,13 @@ void setDate(int console) {
     date_validate = 1;
 
     if (console) {
-        waitfor(getswf(data));
+        while(!getswf(data)) { ucosDelay(0, 0, 0, 100); }
         option = converter(data);
+    
     } else {
-        while (tcp_tick(&socket)) {
-            if(sock_gets(&socket,buffer,2048)) {
-                option = converter(buffer);
-                CLEAR_BUFFER();
-                break;
-            }
-            waitfor(DelayMs(100));
-        }
+        while(!sock_gets(&socket, data, 4)) { ucosDelay(0, 0, 0, 100); }
+        option = converter(data);
+
         sock_err:
         switch(status)
         {
@@ -100,25 +97,58 @@ void setDate(int console) {
     switch(option) {
         case 1:
             if (console) {
-                wfd askTimeHourData(&time_in_sec, time_pointer, 1, 0);
+                while(!askTimeHourData(&time_in_sec, time_pointer, 1, 0)) { 
+                    if (askTimeHourData(&time_in_sec, time_pointer, 1, 0) == -1) {
+                        return;
+                    }
+                    DELAY100MS(); 
+                }
+
             } else {
-                wfd askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 0, &time_validated, &date_validate);
+                while(!askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 0, &time_validated, &date_validate)) { 
+                    if (askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 0, &time_validated, &date_validate) == -1) {
+                        return;
+                    }
+                    DELAY100MS(); 
+                }
             }
             break;
 
         case 2:
             if (console) {
-                wfd askTimeHourData(&time_in_sec, time_pointer, 0, 1);
+                while(!askTimeHourData(&time_in_sec, time_pointer, 0, 1)) { 
+                    if (askTimeHourData(&time_in_sec, time_pointer, 0, 1) == -1) {
+                        return;
+                    }
+                    DELAY100MS();
+                }
+
             } else {
-                wfd askTimeHourDataEthernet(&time_in_sec, time_pointer, 0, 1, &time_validated, &date_validate);
+                while(!askTimeHourDataEthernet(&time_in_sec, time_pointer, 0, 1, &time_validated, &date_validate)) { 
+                    if (askTimeHourDataEthernet(&time_in_sec, time_pointer, 0, 1, &time_validated, &date_validate) == -1) {
+                        return;
+                    }
+                    DELAY100MS(); 
+                }
             }
             break;
 
         case 3:
             if (console) {
-                wfd askTimeHourData(&time_in_sec, time_pointer, 1, 1);
+                while(!askTimeHourData(&time_in_sec, time_pointer, 1, 1)) { 
+                    if (askTimeHourData(&time_in_sec, time_pointer, 1, 1) == -1) {
+                        return;
+                    }
+                    DELAY100MS(); 
+                }
+
             } else {
-                wfd askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 1, &time_validated, &date_validate);
+                while(!askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 1, &time_validated, &date_validate)) { 
+                    if (askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 1, &time_validated, &date_validate) == -1) {
+                        return;
+                    }
+                    DELAY100MS(); 
+                }
             }
             break;
 
@@ -126,13 +156,11 @@ void setDate(int console) {
             if (console) {
         	    CLEAR_SCREEN();
             } else {
-                tcp_tick(&socket);
                 clearScreenEthernet();
             }
 
         	setState(INITIAL);
-            abort;
-            break;
+            return;
 
         default:
             if (console) {
@@ -143,71 +171,83 @@ void setDate(int console) {
                 clearScreenEthernet();
                 printEthernet("Por favor seleccione una de las opciones posibles\n\n");
             }
-            abort;
+            return;
     }
 
     if (!(time_validated & date_validate)) {
-        abort;
+        return;
     }
 
     setClock(&time_in_sec, time_pointer, console);
 }
 
 /*** BeginHeader askTimeHourData */
-void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date);
+int askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate);
 /*** EndHeader */
 
-void askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date) {
+int askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate) {
 
     printf("\n");
 
     if (ask_time) {
-        wfd getTime(time_pointer);
-    }
-    if (ask_date) {
-        wfd getDate(time_pointer);
+        while(!getTime(time_pointer)) { DELAY100MS(); }
     }
 
-    *time_in_sec = mktime(time_pointer);
-}
-
-/*** BeginHeader askTimeHourDataEthernet */
-void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate);
-/*** EndHeader */
-
-void askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate) {
-
-    if (ask_time) {
-        wfd getTimeEthernet(time_pointer, time_validate);
-    }
-    if (ask_date & *time_validate) {
-        wfd getDateEthernet(time_pointer, date_validate);
+    if (ask_date & *time_validat) {
+        while(!getDate(time_pointer)) { DELAY100MS(); }
     }
 
     if (*time_validate & *date_validate) {
         *time_in_sec = mktime(time_pointer);
+
+    } else {
+        return -1;
     }
+    
+    return 1;
+}
+
+/*** BeginHeader askTimeHourDataEthernet */
+int askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate);
+/*** EndHeader */
+
+int askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate) {
+
+    if (ask_time) {
+        while(!getTimeEthernet(time_pointer, time_validate)) { DELAY100MS(); }
+    }
+
+    if (ask_date & *time_validate) {
+        while(!getDateEthernet(time_pointer, date_validate);) { DELAY100MS(); }
+    }
+
+    if (*time_validate & *date_validate) {
+        *time_in_sec = mktime(time_pointer);
+    
+    } else {
+        return -1;
+    }
+
+    return 1;
 }
 
 /*** BeginHeader getTime */
-void getTime(struct tm *time_pointer);
+int getTime(struct tm *time_pointer, int *time_validate);
 /*** EndHeader */
 
-void getTime(struct tm *time_pointer) {
+int getTime(struct tm *time_pointer, int *time_validate) {
     char hour[10];
 	char min[10];
 	char sec[10];
-    int hour_int, min_int, sec_int, validate;
-
-    validate = 1;
+    int hour_int, min_int, sec_int;
 
     // Ask for time
     printf("Ingrese hora: ");
-    waitfor(getswf(hour));
+    while(!getswf(hour)) { ucosDelay(0, 0, 0, 100); }
     printf("Ingrese minutos: ");
-    waitfor(getswf(min));
-    printf("Ingrese segundos: ");
-    waitfor(getswf(sec));
+    while(!getswf(min)) { ucosDelay(0, 0, 0, 100); }
+    ("Ingrese segundos: ");
+    while(!getswf(sec)) { ucosDelay(0, 0, 0, 100); }
 
     // Convert strings to int
     hour_int = converter(hour);
@@ -218,71 +258,38 @@ void getTime(struct tm *time_pointer) {
         (*time_pointer).tm_hour = hour_int;
         (*time_pointer).tm_min = min_int;
         (*time_pointer).tm_sec = sec_int;
+
     } else {
         CLEAR_SCREEN();
         printf ("Datos de hora invalidos\n\n");
-        abort;
+        *time_validate = 0;
     }
+    return 1;
 }
 
 /*** BeginHeader getTimeEthernet */
-void getTimeEthernet(struct tm *time_pointer, int *time_validate);
+int getTimeEthernet(struct tm *time_pointer, int *time_validate);
 /*** EndHeader */
 
-void getTimeEthernet(struct tm *time_pointer, int *time_validate) {
-    int hour_int, min_int, sec_int, validate, state, printed, exit_while;
-
-    validate = 1;
-    state = 1;
-    printed = 0;
-    exit_while = 0;
+int getTimeEthernet(struct tm *time_pointer, int *time_validate) {
+    char hour[10];
+	char min[10];
+	char sec[10];
+    int hour_int, min_int, sec_int, validate;
 
     CLEAR_BUFFER();
 
-    while (tcp_tick(&socket)) {
-        switch (state) {
-            case 1:
-                if (!printed) {
-                    printEthernet("\nIngrese hora: ");
-                    printed = 1;
-                }
+    printEthernet("\nIngrese hora: ");
+    while(!sock_gets(&socket, hour, 10)) { ucosDelay(0, 0, 0, 100); }
+    printEthernet("\nIngrese minutos: ");
+    while(!sock_gets(&socket, min, 10)) { ucosDelay(0, 0, 0, 100); }
+    printEthernet("\nIngrese segundos: ");
+    while(!sock_gets(&socket, sec, 10)) { ucosDelay(0, 0, 0, 100); }
 
-                if(sock_gets(&socket,buffer,2048)) {
-                    hour_int = converter(buffer);
-                    CLEAR_BUFFER();
-                    state = 2;
-                    printed = 0;
-                }
-            
-            case 2:
-                if (!printed) {
-                    printEthernet("\nIngrese minutos: ");
-                    printed = 1;
-                }
-
-                if(sock_gets(&socket,buffer,2048)) {
-                    min_int = converter(buffer);
-                    CLEAR_BUFFER();
-                    state = 3;
-                    printed = 0;
-                }
-
-            case 3:
-                if (!printed) {
-                    printEthernet("\nIngrese segundos: ");
-                    printed = 1;
-                }
-                if(sock_gets(&socket,buffer,2048)) {
-                    sec_int = converter(buffer);
-                    CLEAR_BUFFER();
-                    exit_while = 1;
-                }
-        }
-        if (exit_while) {
-            break;
-        }
-        waitfor(DelayMs(100));
-    }
+    // Convert strings to int
+    hour_int = converter(hour);
+    min_int = converter(min);
+    sec_int = converter(sec);
     
     sock_err:
     switch(status) {
@@ -298,12 +305,14 @@ void getTimeEthernet(struct tm *time_pointer, int *time_validate) {
         (*time_pointer).tm_hour = hour_int;
         (*time_pointer).tm_min = min_int;
         (*time_pointer).tm_sec = sec_int;
+
     } else {
         clearScreenEthernet();
         printEthernet("Datos de hora invalidos\n");
         *time_validate = 0;
-        abort;
     }
+
+    return 1;
 }
 
 /*** BeginHeader validateTime */
@@ -329,24 +338,22 @@ int validateTime(int hour_int, int min_int, int sec_int) {
 }
 
 /*** BeginHeader getDate */
-void getDate(struct tm *time_pointer);
+void getDate(struct tm *time_pointer, int *date_validate);
 /*** EndHeader */
 
-void getDate(struct tm *time_pointer) {
+void getDate(struct tm *time_pointer, int *date_validate) {
     char day[10];
 	char month[10];
 	char year[10];
-    int day_int, month_int, year_int, validate;
-
-    validate = 1;
+    int day_int, month_int, year_int;
 
     // Ask for date
     printf("Ingrese dia: ");
-    waitfor(getswf(day));
+    while(!getswf(day)) { ucosDelay(0, 0, 0, 100) };
     printf("Ingrese mes: ");
-    waitfor(getswf(month));
+    while(!getswf(month)) { ucosDelay(0, 0, 0, 100) };
     printf("Ingrese anio: ");
-    waitfor(getswf(year));
+    while(!getswf(year)) { ucosDelay(0, 0, 0, 100) };
 
     // Convert strings to int
     day_int = converter(day);
@@ -360,7 +367,7 @@ void getDate(struct tm *time_pointer) {
     } else {
         CLEAR_SCREEN();
         printf ("Datos de fecha invalidos\n\n");
-        abort;
+        *date_validate = 0;
     }
 }
 
@@ -369,59 +376,18 @@ void getDateEthernet(struct tm *time_pointer, int *date_validate);
 /*** EndHeader */
 
 void getDateEthernet(struct tm *time_pointer, int *date_validate) {
-    int day_int, month_int, year_int, validate, state, printed, exit_while;
+    char day[10];
+	char month[10];
+	char year[10];
+    int day_int, month_int, year_int, validate;
 
-    validate = 1;
-    state = 1;
-    printed = 0;
-    exit_while = 0;
-
-    while (tcp_tick(&socket)) {
-        switch (state) {
-            case 1:
-                if (!printed) {
-                    printEthernet("\nIngrese dia: ");
-                    printed = 1;
-                }
-
-                if(sock_gets(&socket,buffer,2048)) {
-                    day_int = converter(buffer);
-                    CLEAR_BUFFER();
-                    state = 2;
-                    printed = 0;
-                }
-            
-            case 2:
-                if (!printed) {
-                    printEthernet("\nIngrese mes: ");
-                    printed = 1;
-                }
-
-                if(sock_gets(&socket,buffer,2048)) {
-                    month_int = converter(buffer);
-                    CLEAR_BUFFER();
-                    state = 3;
-                    printed = 0;
-                }
-
-            case 3:
-                if (!printed) {
-                    printEthernet("\nIngrese anio: ");
-                    printed = 1;
-                }
-                if(sock_gets(&socket,buffer,2048)) {
-                    year_int = converter(buffer);
-                    CLEAR_BUFFER();
-                    exit_while = 1;
-                }
-        }
-
-        if (exit_while) {
-            break;
-        }
-        
-        waitfor(DelayMs(100));
-    }
+    // Get date info
+    printEthernet("\nIngrese dia: ");
+    while(!sock_gets(&socket, day, 10)) { ucosDelay(0, 0, 0, 100); }
+    printEthernet("\nIngrese mes: ");
+    while(!sock_gets(&socket, month, 10)) { ucosDelay(0, 0, 0, 100); }
+    printEthernet("\nIngrese anio: ");
+    while(!sock_gets(&socket, year, 10)) { ucosDelay(0, 0, 0, 100); }
 
     sock_err:
     switch(status) {
@@ -433,15 +399,21 @@ void getDateEthernet(struct tm *time_pointer, int *date_validate) {
             break;
     }
 
+    // Convert strings to int
+    day_int = converter(day);
+    month_int = converter(month);
+    year_int = converter(year);
+
+    // Validate the info
     if (validateDate(day_int, month_int, year_int)) {
         (*time_pointer).tm_mday = day_int;
         (*time_pointer).tm_mon = month_int;
         (*time_pointer).tm_year = year_int - 1900;
+
     } else {
         clearScreenEthernet();
         printEthernet("Datos de fecha invalidos\n");
         *date_validate = 0;
-        abort;
     }
 }
 
