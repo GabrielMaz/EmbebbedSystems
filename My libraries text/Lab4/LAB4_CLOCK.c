@@ -97,8 +97,8 @@ void setDate(int console) {
     switch(option) {
         case 1:
             if (console) {
-                while(!askTimeHourData(&time_in_sec, time_pointer, 1, 0)) { 
-                    if (askTimeHourData(&time_in_sec, time_pointer, 1, 0) == -1) {
+                while(!askTimeHourData(&time_in_sec, time_pointer, 1, 0, &time_validated, &date_validate)) { 
+                    if (askTimeHourData(&time_in_sec, time_pointer, 1, 0, &time_validated, &date_validate) == -1) {
                         return;
                     }
                     DELAY100MS(); 
@@ -116,8 +116,8 @@ void setDate(int console) {
 
         case 2:
             if (console) {
-                while(!askTimeHourData(&time_in_sec, time_pointer, 0, 1)) { 
-                    if (askTimeHourData(&time_in_sec, time_pointer, 0, 1) == -1) {
+                while(!askTimeHourData(&time_in_sec, time_pointer, 0, 1, &time_validated, &date_validate)) { 
+                    if (askTimeHourData(&time_in_sec, time_pointer, 0, 1, &time_validated, &date_validate) == -1) {
                         return;
                     }
                     DELAY100MS();
@@ -135,8 +135,8 @@ void setDate(int console) {
 
         case 3:
             if (console) {
-                while(!askTimeHourData(&time_in_sec, time_pointer, 1, 1)) { 
-                    if (askTimeHourData(&time_in_sec, time_pointer, 1, 1) == -1) {
+                while(!askTimeHourData(&time_in_sec, time_pointer, 1, 1, &time_validated, &date_validate)) { 
+                    if (askTimeHourData(&time_in_sec, time_pointer, 1, 1, &time_validated, &date_validate) == -1) {
                         return;
                     }
                     DELAY100MS(); 
@@ -190,11 +190,11 @@ int askTimeHourData(unsigned long *time_in_sec, struct tm *time_pointer, int ask
     printf("\n");
 
     if (ask_time) {
-        while(!getTime(time_pointer)) { DELAY100MS(); }
+        while(!getTime(time_pointer, time_validate)) { DELAY100MS(); }
     }
 
-    if (ask_date & *time_validat) {
-        while(!getDate(time_pointer)) { DELAY100MS(); }
+    if (ask_date & *time_validate) {
+        while(!getDate(time_pointer, date_validate)) { DELAY100MS(); }
     }
 
     if (*time_validate & *date_validate) {
@@ -218,7 +218,7 @@ int askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer,
     }
 
     if (ask_date & *time_validate) {
-        while(!getDateEthernet(time_pointer, date_validate);) { DELAY100MS(); }
+        while(!getDateEthernet(time_pointer, date_validate)) { DELAY100MS(); }
     }
 
     if (*time_validate & *date_validate) {
@@ -338,10 +338,10 @@ int validateTime(int hour_int, int min_int, int sec_int) {
 }
 
 /*** BeginHeader getDate */
-void getDate(struct tm *time_pointer, int *date_validate);
+int getDate(struct tm *time_pointer, int *date_validate);
 /*** EndHeader */
 
-void getDate(struct tm *time_pointer, int *date_validate) {
+int getDate(struct tm *time_pointer, int *date_validate) {
     char day[10];
 	char month[10];
 	char year[10];
@@ -349,11 +349,11 @@ void getDate(struct tm *time_pointer, int *date_validate) {
 
     // Ask for date
     printf("Ingrese dia: ");
-    while(!getswf(day)) { ucosDelay(0, 0, 0, 100) };
+    while(!getswf(day)) { ucosDelay(0, 0, 0, 100); }
     printf("Ingrese mes: ");
-    while(!getswf(month)) { ucosDelay(0, 0, 0, 100) };
+    while(!getswf(month)) { ucosDelay(0, 0, 0, 100); }
     printf("Ingrese anio: ");
-    while(!getswf(year)) { ucosDelay(0, 0, 0, 100) };
+    while(!getswf(year)) { ucosDelay(0, 0, 0, 100); }
 
     // Convert strings to int
     day_int = converter(day);
@@ -369,13 +369,15 @@ void getDate(struct tm *time_pointer, int *date_validate) {
         printf ("Datos de fecha invalidos\n\n");
         *date_validate = 0;
     }
+
+    return 1;
 }
 
 /*** BeginHeader getDateEthernet */
-void getDateEthernet(struct tm *time_pointer, int *date_validate);
+int getDateEthernet(struct tm *time_pointer, int *date_validate);
 /*** EndHeader */
 
-void getDateEthernet(struct tm *time_pointer, int *date_validate) {
+int getDateEthernet(struct tm *time_pointer, int *date_validate) {
     char day[10];
 	char month[10];
 	char year[10];
@@ -415,6 +417,8 @@ void getDateEthernet(struct tm *time_pointer, int *date_validate) {
         printEthernet("Datos de fecha invalidos\n");
         *date_validate = 0;
     }
+
+    return 1;
 }
 
 /*** BeginHeader validateDate */

@@ -1,7 +1,7 @@
 /*** BeginHeader */
 
-#define DELAY100MS() (ucosDelay(0, 0, 0, 100));
-#define DELAY_MS(int ms) (ucosDelay(0, 0, 0, ms));
+#define DELAY100MS() (ucosDelay(0, 0, 0, 100))
+#define DELAY_MS(ms) (ucosDelay(0, 0, 0, ms))
 
 #use "ucos2.lib"
 

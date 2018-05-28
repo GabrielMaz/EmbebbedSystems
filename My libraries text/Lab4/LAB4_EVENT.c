@@ -1,7 +1,9 @@
 /*** BeginHeader */
 
-#use LAB3_SYSTEM.LIB
-#use LAB3_ETHERNET.LIB
+#use LAB4_SYSTEM.LIB
+#use LAB4_MENU.LIB
+#use LAB4_ETHERNET.LIB
+#use LAB4_UCOS.LIB
 
 #define MAX_NUMBER_EVENTS 7
 
@@ -175,11 +177,11 @@ void createEventUi(int console) {
         }
 
     } else {
-            // Ask for a event name
-        wfd getEventName(name_pointer, console);
+        // Ask for a event name
+        getEventName(name_pointer, console);
 
-        // Ask for leds value
-        wfd getEventLeds(leds_pointer, console);
+        // Ask for leds values
+        getEventLeds(leds_pointer, console);
 
         // check if entered value belongs to the possible values
         if (!validateEventLeds(leds_pointer)) {
@@ -192,19 +194,19 @@ void createEventUi(int console) {
                 printEthernet("Por favor ingrese un dato valido");
             }
             
-            abort;
+            return;
         }
 
         if (console) {
             // Ask for time and date
-            wfd askTimeHourData(&event.time, time_pointer, 1, 1);
+            askTimeHourData(&event.time, time_pointer, 1, 1, &time_validated, &date_validate);
 
         } else {
-            wfd askTimeHourDataEthernet(&event.time, time_pointer, 1, 1, &time_validated, &date_validate);
+            askTimeHourDataEthernet(&event.time, time_pointer, 1, 1, &time_validated, &date_validate);
         }
 
         if (!(time_validated & date_validate)) {
-            abort;
+            return;
         }
 
         insertEvent(event_pointer);
@@ -228,8 +230,6 @@ void insertEvent(struct Event *event);
 void insertEvent(struct Event *event) {
     int i;
 
-    while (!semaphore);
-    WAIT();
 
     for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
         if (events[i].array_postion == -1) {
@@ -240,7 +240,6 @@ void insertEvent(struct Event *event) {
         }
     }
 
-    SIGNAL();
 }
 
 /*** BeginHeader getEventName */
@@ -252,20 +251,14 @@ void getEventName(char *name, int console) {
     if (console) {
         printf("\nPor favor ingrese un nombre para el evento (maximo 10 caracteres): ");
 
-        // get name
-        waitfor(getswf(name));
+        while(!getswf(name)) { ucosDelay(0, 0, 0, 100); }
 
     } else {
         printEthernet("\nPor favor ingrese un nombre para el evento (maximo 10 caracteres): ");
         CLEAR_BUFFER();
-        while (tcp_tick(&socket)) {
-            sock_wait_input(&socket,0,NULL,&status);
-            if(sock_gets(&socket,buffer,2048)) {
-                strcpy(name, buffer);
-                CLEAR_BUFFER();
-                break;
-            }
-        }
+        while(!sock_gets(&socket, name, 11)) { ucosDelay(0, 0, 0, 100); }
+        //strcpy(name, buffer_msg);
+        CLEAR_BUFFER();
         
         sock_err:
         switch(status) {
@@ -305,19 +298,17 @@ void getEventLeds(char* leds, int console) {
     if (console) {
         printf("\nPor favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: ");
 
-        waitfor(getswf(leds));
+        while(!getswf(leds)) { ucosDelay(0, 0, 0, 100); }
 
     } else {
         printEthernet("\nPor favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: ");
         CLEAR_BUFFER();
-        while (tcp_tick(&socket)) {
-            sock_wait_input(&socket,0,NULL,&status);
-            if(sock_gets(&socket,buffer,2048)) {
-                strcpy(leds, buffer);
-                CLEAR_BUFFER();
-                break;
-            }
-        }
+
+        while(!sock_gets(&socket, leds, 9)) { ucosDelay(0, 0, 0, 100); }
+
+        /*while(!sock_gets(&socket,buffer_msg,250)) { ucosDelay(0, 0, 0, 100); }
+        strcpy(leds, buffer_msg);
+        CLEAR_BUFFER();*/
         
         sock_err:
         switch(status) {
@@ -376,12 +367,12 @@ void deleteEventUI() {
     int option, i;
     
     printf("Ingrese numero de evento a eliminar: ");
-    waitfor(getswf(data));
+    while(!getswf(data)) { ucosDelay(0, 0, 0, 100); }
     option = converter(data) - 1;
 
     if (option < 0 | option > MAX_NUMBER_EVENTS) {
         printf("\nPor favor ingrese un dato valido\n\n");
-        abort;
+        return;
     }
 
     CLEAR_SCREEN();
@@ -404,14 +395,12 @@ void deleteEventEthernetUI() {
 
     printEthernet("\nIngrese numero de evento a eliminar: ");
     CLEAR_BUFFER();
-    while (tcp_tick(&socket)) {
-        sock_wait_input(&socket,0,NULL,&status);
-        if(sock_gets(&socket,buffer,2048)) {
-            option = converter(buffer) - 1;
-            CLEAR_BUFFER();
-            break;
-        }
-    }
+
+    while(!sock_gets(&socket, data, 4)) { ucosDelay(0, 0, 0, 100); }
+    option = converter(data) - 1;
+
+    /*option = converter(buffer_msg) - 1;
+    CLEAR_BUFFER(); */
     
     sock_err:
     switch(status) {
@@ -426,7 +415,7 @@ void deleteEventEthernetUI() {
     if (option < 0 | option > 5) {
         clearScreenEthernet();
         printEthernet("Por favor ingrese un dato valido ");
-        abort;
+        return;
     }
 
     if (deleteEvent(option)) {
@@ -448,8 +437,6 @@ int deleteEvent(int option) {
 
     deleted = 0;
 
-    while (!semaphore);
-    WAIT();
 
     for (i = 0; i < MAX_NUMBER_EVENTS; i++) {
         if (i == option & events[i].array_postion != -1) {
@@ -459,7 +446,6 @@ int deleteEvent(int option) {
         }
     }
 
-    SIGNAL();
 
     return deleted;
 }

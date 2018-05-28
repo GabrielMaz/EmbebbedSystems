@@ -42,8 +42,6 @@ void optionSelected(int console) {
         }
         
         option = converter(data);
-        CLEAR_BUFFER();
-        break;
     
         sock_err:
         switch(status) {
