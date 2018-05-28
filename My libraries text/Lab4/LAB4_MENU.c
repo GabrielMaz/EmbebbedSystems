@@ -1,6 +1,7 @@
 /*** BeginHeader */
-#use LAB3_SYSTEM.LIB
-#use LAB3_ETHERNET.LIB
+#use LAB4_SYSTEM.LIB
+#use LAB4_ETHERNET.LIB
+#use LAB4_UCOS.LIB
 
 #define CLIENTS 50
 
@@ -30,20 +31,20 @@ void optionSelected(int console) {
     int option;
 
     if (console) {
-        waitfor(getswf(data));
+        while (!(getswf(data))){
+            DELAY100MS();
+        }
         option = converter(data);
 
     } else {
-        while (tcp_tick(&socket)) {
-            if(sock_gets(&socket,buffer,2048)) {
-                option = converter(buffer);
-                CLEAR_BUFFER();
-                break;
-            } else {
-                abort;
-            }
+        while (!(sock_gets(&socket, data, 4))) {
+            DELAY100MS();
         }
         
+        option = converter(data);
+        CLEAR_BUFFER();
+        break;
+    
         sock_err:
         switch(status) {
             case 1: /* foreign host closed */
@@ -54,7 +55,7 @@ void optionSelected(int console) {
                 break;
         }
     }
-
+    
     switch (option) {
         case 1:
             if (console) {
@@ -120,9 +121,7 @@ void optionSelected(int console) {
                 clearScreenEthernet();
                 printEthernet("Por favor seleccione una de las opciones posibles\n\n");
             }
-            abort;
     }
-
 }
 
 /*** BeginHeader converter */
@@ -147,7 +146,7 @@ int converter(char *data) {
     while (*(data+i) != '\0') {
 
         // get value of string
-        *(data + i) = *(data + i) - 0x30;       //0x30 hex = 48 ascii = 0
+        *(data + i) = *(data + i) - 0x30;                       //0x30 hex = 48 ascii = 0
 
         // increase depending on the position of the number | 123 = 100*3 + 10*2 + 1*3
         result += multipleOfTen(length - i - 1)*(*(data+i));
@@ -194,7 +193,7 @@ int multipleOfTwo(int multiple) {
 void selectOption(int state, int console);
 /*** EndHeader */
 
-void selectOption[MAX_INTERFACES](int state, int console) {
+void selectOption(int state, int console) {
     switch(state){
         case INITIAL:
             menuUI(console);
@@ -202,7 +201,7 @@ void selectOption[MAX_INTERFACES](int state, int console) {
             break;
 
         case MENU:
-            wfd optionSelected(console);
+            optionSelected(console);
             break;
 
         case DISPLAY_HOUR:
@@ -212,32 +211,32 @@ void selectOption[MAX_INTERFACES](int state, int console) {
 
         case INPUT_HOUR:
             inputHourUI(console);
-            wfd setDate(console);
+            setDate(console);
             break;
 
         case LIST_EVENTS:
             if (console) {
-                wfd printEvents();
+                printEvents();
 
             } else {
                 clearScreenEthernet();
-                wfd printEventsEthernet();
+                printEventsEthernet();
             }
             
             setState(INITIAL);
             break;
 
         case ADD_EVENT:
-            wfd createEventUi(console);
+            createEventUi(console);
             setState(INITIAL);
             break;
 
         case DELETE_EVENT:
             if (console) {
                 if (events_actived > 0) {
-                    wfd printEvents();
-                    wfd deleteEventUI();
-                    wfd printEvents();
+                    printEvents();
+                    deleteEventUI();
+                    printEvents();
 
                 } else {
                     CLEAR_SCREEN();
@@ -247,8 +246,8 @@ void selectOption[MAX_INTERFACES](int state, int console) {
             } else {
                 if (events_actived > 0) {
                     clearScreenEthernet();
-                    wfd printEventsEthernet();
-                    wfd deleteEventEthernetUI();
+                    printEventsEthernet();
+                    deleteEventEthernetUI();
                 
                 } else {
                     clearScreenEthernet();
@@ -263,13 +262,13 @@ void selectOption[MAX_INTERFACES](int state, int console) {
         
         case ANALOG_INPUT_0:
             getAnalogInput(0, console);
-            wfd delayMS(PIC_TIMEOUT);
+            DELAY_MS(PIC_TIMEOUT);
             setState(INITIAL);
             break;
 
         case ANALOG_INPUT_1:
             getAnalogInput(1, console);
-            wfd delayMS(PIC_TIMEOUT);
+            DELAY_MS(PIC_TIMEOUT);
             setState(INITIAL);
             break;
     }
