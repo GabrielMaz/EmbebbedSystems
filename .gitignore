@@ -107,3 +107,5 @@ lab2/MAIN-LAB2\.rom
 *.HDL
 
 *.BDL
+
+*.bin
