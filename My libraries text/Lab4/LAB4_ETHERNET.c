@@ -1,15 +1,17 @@
 /*** BeginHeader */
 
-#define TCPCONFIG 0
+#define TCPCONFIG       0
 
-#define USE_ETHERNET		1
-#define MY_IP_ADDRESS "10.10.6.100"
-#define MY_NETMASK "255.255.255.0"
-#define MY_GATEWAY "10.10.6.2"
+#define USE_ETHERNET	1
+#define MY_IP_ADDRESS   "10.10.6.100"
+#define MY_NETMASK      "255.255.255.0"
+#define MY_GATEWAY      "10.10.6.2"
 
 #define CONNECTION_DIM 50
 
 #define CLEAR_BUFFER() (memset(&buffer_msg, '\0', 250));
+
+#define CLEAR_SOCKET() (sock_fastread(&socket, buffer, 100));
 
 #memmap xmem
 #use "dcrtcp.lib"
@@ -17,7 +19,7 @@
 #define PORT 7
 
 tcp_Socket socket;
-char buffer[2048];
+char buffer[100];
 char buffer_msg[250];
 int status;
 

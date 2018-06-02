@@ -8,71 +8,49 @@
 /*** EndHeader */
 
 /*** BeginHeader menuUI */
-void menuUI(int console);
+void menuUI();
 /*** EndHeader */
 
-void menuUI(int console) {
-    if (console) {
-        printf("Menu: \n\n1 - Mostrar hora \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n");
-        printf("6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2\n\n ");
-        printf("Seleccione una opcion: ");
-
-    } else {
-        printEthernet("Menu: \n\n1 - Mostrar hora \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2 \n\nSeleccione una opcion: ");
-    }
+void menuUI() {
+    printEthernet("Menu: \n\n1 - Mostrar hora \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2 \n\nSeleccione una opcion: ");
 }
 
 /*** BeginHeader optionSelected */
-void optionSelected(int console);
+void optionSelected();
 /*** EndHeader */
 
-void optionSelected(int console) {
+void optionSelected() {
     char data[4];
     int option;
 
-    if (console) {
-        while (!(getswf(data))){
-            DELAY100MS();
-        }
-        option = converter(data);
-
-    } else {
-        while (!(sock_gets(&socket, data, 4))) {
-            DELAY100MS();
-        }
-        
-        option = converter(data);
+    while (!(sock_gets(&socket, data, 4))) {
+        DELAY100MS();
+    }
     
-        sock_err:
-        switch(status) {
-            case 1: /* foreign host closed */
-                printf("User closed session\n");
-                break;
-            case -1: /* time-out */
-                printf("Connection timed out\n");
-                break;
-        }
+    option = converter(data);
+
+    CLEAR_SOCKET();
+
+    sock_err:
+    switch(status) {
+        case 1: /* foreign host closed */
+            printf("User closed session\n");
+            break;
+        case -1: /* time-out */
+            printf("Connection timed out\n");
+            break;
     }
     
     switch (option) {
         case 1:
-            if (console) {
-                CLEAR_SCREEN();
-
-            } else {
-                clearScreenEthernet();
-            }
+            clearScreenEthernet();
             
             setState(DISPLAY_HOUR);
             break;
 
         case 2:
-            if (console) {
-                CLEAR_SCREEN();
+            clearScreenEthernet();
 
-            } else {
-                clearScreenEthernet();
-            }
             setState(INPUT_HOUR);
             break;
 
@@ -89,36 +67,22 @@ void optionSelected(int console) {
             break;
 
         case 6:
-            if (console) {
-                CLEAR_SCREEN();
-
-            } else {
-                clearScreenEthernet();
-            }
+            clearScreenEthernet();
             
             setState(ANALOG_INPUT_0);
             break;
 
         case 7:
-            if (console) {
-                CLEAR_SCREEN();
-
-            } else {
-                clearScreenEthernet();
-            }
+            clearScreenEthernet();
 
             setState(ANALOG_INPUT_1);
             break;
 
         default:
-            if (console) {
-                CLEAR_SCREEN();
-                printf("Por favor seleccione una de las opciones posibles\n\n");
-
-            } else {
-                clearScreenEthernet();
-                printEthernet("Por favor seleccione una de las opciones posibles\n\n");
-            }
+            clearScreenEthernet();
+            printEthernet("Por favor seleccione una de las opciones posibles\n\n");
+            return;
+            
     }
 }
 
@@ -188,84 +152,66 @@ int multipleOfTwo(int multiple) {
 }
 
 /*** BeginHeader selectOption */
-void selectOption(int state, int console);
+void selectOption(int state);
 /*** EndHeader */
 
-void selectOption(int state, int console) {
+void selectOption(int state) {
     switch(state){
         case INITIAL:
-            menuUI(console);
+            menuUI();
             setState(MENU);
             break;
 
         case MENU:
-            optionSelected(console);
+            optionSelected();
             break;
 
         case DISPLAY_HOUR:
-            displayHourUI(getRtcTime(), console);
+            displayHourUI(getRtcTime());
             setState(INITIAL);
             break;
 
         case INPUT_HOUR:
-            inputHourUI(console);
-            setDate(console);
+            inputHourUI();
+            setDate();
             break;
 
         case LIST_EVENTS:
-            if (console) {
-                printEvents();
-
-            } else {
-                clearScreenEthernet();
-                printEventsEthernet();
-            }
+            clearScreenEthernet();
+            printEventsEthernet();
             
             setState(INITIAL);
             break;
 
         case ADD_EVENT:
-            createEventUi(console);
+            createEventUi();
             setState(INITIAL);
             break;
 
         case DELETE_EVENT:
-            if (console) {
-                if (events_actived > 0) {
-                    printEvents();
-                    deleteEventUI();
-                    printEvents();
-
-                } else {
-                    CLEAR_SCREEN();
-                    printf("No hay eventos para eliminar\n\n");
-                }
-
-            } else {
-                if (events_actived > 0) {
-                    clearScreenEthernet();
-                    printEventsEthernet();
-                    deleteEventEthernetUI();
-                
-                } else {
-                    clearScreenEthernet();
-                    printEthernet("No hay eventos para eliminar\n");
-                }
+            if (events_actived > 0) {
                 clearScreenEthernet();
+                printEventsEthernet();
+                deleteEventEthernetUI();
+            
+            } else {
+                clearScreenEthernet();
+                printEthernet("No hay eventos para eliminar\n");
             }
+            clearScreenEthernet();
 
             setState(INITIAL);
             
             break;
         
         case ANALOG_INPUT_0:
-            getAnalogInput(0, console);
+            getAnalogInput(0);
             DELAY_MS(PIC_TIMEOUT);
             setState(INITIAL);
             break;
 
         case ANALOG_INPUT_1:
-            getAnalogInput(1, console);
+            getAnalogInput(1);
             DELAY_MS(PIC_TIMEOUT);
             setState(INITIAL);
             break;

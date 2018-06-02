@@ -1,8 +1,6 @@
 /*** BeginHeader */
 
 #define CLEAR_SCREEN() (printf(" \x1Bt"));
-#define CONSOLE 1
-#define ETHERNET 0
 #define MAX_INTERFACES 2
 
 #use LAB4_IO.LIB

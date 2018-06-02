@@ -14,7 +14,7 @@ Task 5.         Check for events.
 #class auto 			// Change default storage class for local variables: on the stack*****************************************************************************************************
 
 // Redefine uC/OS-II configuration constants as necessary
-#define OS_MAX_EVENTS           5       // Maximum number of events (semaphores, queues, mailboxes)
+#define OS_MAX_EVENTS           5       // Maximum number of events (semaphores + queues + mailboxes + MAX_TCP_SOCKET_BUFFERS + 2)
 #define OS_MAX_TASKS            4  		// Maximum number of tasks system can create (less stat and idle tasks)
 
 #define OS_MEM_EN               1   
@@ -106,8 +106,6 @@ void  redLedTask (void *pdata)
         setOutput(PORT_E, BIT_5, 1);
         OSTimeDlyHMSM(0, 0, 0, 400); 
         setOutput(PORT_E, BIT_5, 0);
-
-        printf("task1\n");
     }
 }
 
@@ -124,8 +122,6 @@ void  tickTask (void *data)
     while(1) {
         tcp_tick(&socket);
 
-        printf("task2\n");
-
         OSTimeDly(5);
     }
 }
@@ -141,9 +137,7 @@ void  tickTask (void *data)
 void  ethernetTask (void *data)
 {
     while(1) {
-        selectOption(current_state, ETHERNET);
-
-        printf("task3\n");
+        selectOption(current_state);
 
         OSTimeDly(5);
     }
@@ -161,8 +155,6 @@ void  checkEventsTask (void *data)
 {
     while(1) {
         checkEventsActivated();
-
-        printf("task4\n");
 
         OSTimeDly(5);
     }
