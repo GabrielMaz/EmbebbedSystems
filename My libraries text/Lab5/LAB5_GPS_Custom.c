@@ -18,11 +18,11 @@ GPSPosition gpsPosition;
 void GPS_init( void );
 /*** EndHeader */
 void GPS_init( void ) {
-    BitWrPortI( PDDDR, &PDDDRShadow, 0, 5 ); //Bit 5 como entrada (ARXB)
-    BitWrPortI( PDFR, &PDFRShadow, 1, 4 );	 //Bit 4 con funcion alternativa (ATXB)
-    serBdatabits( PARAM_8BIT );		           //8 bits de datos
-    serBparity( PARAM_NOPARITY ); 		       //Sin paridad
-    serBopen( 9600 ); 			                 //Baud rate = 9600bps
+    BitWrPortI( PDDDR, &PDDDRShadow, 0, 5 );    //Bit 5 como entrada (ARXB)
+    BitWrPortI( PDFR, &PDFRShadow, 1, 4 );	    //Bit 4 con funcion alternativa (ATXB)
+    serBdatabits( PARAM_8BIT );		            //8 bits de datos
+    serBparity( PARAM_NOPARITY ); 		        //Sin paridad
+    serBopen( 9600 ); 			                //Baud rate = 9600bps
     serBrdFlush();
     serBwrFlush();
 

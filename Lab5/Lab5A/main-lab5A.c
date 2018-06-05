@@ -3,11 +3,11 @@
 This program does the following:
 
 Start up task:  Creates 5 tasks.
-task 1:     	Turn on red led for 800 ms and turn it off for 400 ms.
-task 2:			Excecute ticks to tcp connection.
-task 3:			Excecute program by console.
-task 4:			Excecute program by ethernet.
-Task 5.         Check for events.
+redLedTask:     	Turn on red led for 800 ms and turn it off for 400 ms.
+tickTask:			Excecute ticks to tcp connection.
+ethernetTask:		Excecute program by ethernet.
+checkEventsTask:	Check for events.
+updateRTCTask.      Update RTC.
 					
 
 ********************************************************************************************************/
@@ -15,13 +15,13 @@ Task 5.         Check for events.
 
 // Redefine uC/OS-II configuration constants as necessary
 #define OS_MAX_EVENTS           5       // Maximum number of events (semaphores + queues + mailboxes + MAX_TCP_SOCKET_BUFFERS + 2)
-#define OS_MAX_TASKS            4  		// Maximum number of tasks system can create (less stat and idle tasks)
+#define OS_MAX_TASKS            5  		// Maximum number of tasks system can create (less stat and idle tasks)
 
 #define OS_MEM_EN               1   
 #define OS_TASK_CREATE_EN		1       // Enable normal task creation
 #define OS_TASK_CREATE_EXT_EN	0       // Disable extended task creation
 #define OS_TIME_DLY_HMSM_EN	    1		// Enable OSTimeDlyHMSM
-#define STACK_CNT_512	        7       // number of 512 byte stacks (application tasks + stat task + prog stack)
+#define STACK_CNT_512	        8       // number of 512 byte stacks (application tasks + stat task + prog stack)
 #define STACK_CNT_2K         	5		// TCP/IP needs a 2K stack
 #define TCP_BUF_SIZE            4096	// Make the TCP tx and rx buffers 4K each
 #define MAX_TCP_SOCKET_BUFFERS  1		// One sockets for TCPIP connection.
@@ -64,10 +64,11 @@ Task 5.         Check for events.
 *********************************************************************************************************
 */
 
-void     redLedTask(void *data);
-void     tickTask(void *data);
-void     ethernetTask(void *data);
-void     checkEventsTask(void *data);
+void redLedTask(void *data);
+void tickTask(void *data);
+void ethernetTask(void *data);
+void checkEventsTask(void *data);
+void updateRTCTask(void *data);
 
 
 /*
@@ -76,13 +77,14 @@ void     checkEventsTask(void *data);
 *********************************************************************************************************
 */
 
-void main (void)
-{
+void main (void) {
     initSystem();
 
     OSInit();                                              
 
     initSocket();
+
+    GPS_init();
 
     OSTaskCreate(redLedTask, NULL, 2048, TASK_1_PRIO);
 	OSTaskCreate(tickTask, NULL, 2048, TASK_2_PRIO);
@@ -100,8 +102,7 @@ void main (void)
 *********************************************************************************************************
 */
 
-void  redLedTask (void *pdata)
-{
+void  redLedTask (void *pdata) {
     while(1) {
         OSTimeDlyHMSM(0, 0, 0, 800);
         setOutput(PORT_E, BIT_5, 1);
@@ -118,8 +119,7 @@ void  redLedTask (void *pdata)
 *********************************************************************************************************
 */
 
-void  tickTask (void *data)
-{
+void  tickTask (void *data) {
     while(1) {
         tcp_tick(&socket);
 
@@ -135,8 +135,7 @@ void  tickTask (void *data)
 *********************************************************************************************************
 */
 
-void  ethernetTask (void *data)
-{
+void  ethernetTask (void *data) {
     while(1) {
         selectOption(current_state);
 
@@ -152,11 +151,26 @@ void  ethernetTask (void *data)
 *********************************************************************************************************
 */
 
-void  checkEventsTask (void *data)
-{
+void  checkEventsTask (void *data) {
     while(1) {
         checkEventsActivated();
 
         OSTimeDly(5);
+    }
+}
+
+/*
+*********************************************************************************************************
+*                                               TASK #5
+*
+* Description: Update the rtc if the diference with GPS is bigger than 15 sec.
+*********************************************************************************************************
+*/
+
+void  void updateRTCTask(void *data) {
+    while(1) {
+        needUpdate();
+
+        OSTimeDlyHMSM (0, 5, 0, 0)
     }
 }

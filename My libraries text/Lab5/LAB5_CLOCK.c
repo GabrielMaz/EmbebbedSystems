@@ -2,6 +2,7 @@
 
 #use LAB5_SYSTEM.LIB
 #use LAB5_UCOS.LIB
+#use LAB5_GPS_Custom.LIB
 
 /*** EndHeader */
 
@@ -22,7 +23,7 @@ void displayHourUI(unsigned long time_in_sec);
 void displayHourUI(unsigned long time_in_sec) {
     struct tm time;
     struct tm* time_pointer;
-    char aux[6], result[22];
+    char result[22];
     
     time_pointer = &time;
 
@@ -45,88 +46,6 @@ void inputHourUI() {
     displayHourUI(getRtcTime());
 
     printEthernet("Cambiar fecha y hora \n\n1 - Cambiar hora \n\n2 - Cambiar fecha \n\n3 - Cambiar fecha y hora \n\n4 - Volver \n\nSeleccione una opcion: ");    
-}
-
-/*** BeginHeader setDate */
-void setDate();
-/*** EndHeader */
-
-void setDate() {
-    unsigned long time_in_sec;
-    struct tm time, *time_pointer;
-    char data[4];
-    int option, time_validated, date_validate;
-
-    time_pointer = &time;
-
-    mktm(time_pointer, getRtcTime());
-
-    time_validated = 1;
-    date_validate = 1;
-
-    while(!sock_gets(&socket, data, 4)) { ucosDelay(0, 0, 0, 100); }
-    option = converter(data);
-
-    CLEAR_SOCKET();
-
-    sock_err:
-    switch(status)
-    {
-        case 1: /* foreign host closed */
-            printf("User closed session\n");
-            break;
-        case -1: /* time-out */
-            printf("Connection timed out\n");
-            break;
-    }
-
-    switch(option) {
-        case 1:
-            while(!askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 0, &time_validated, &date_validate)) { 
-                if (askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 0, &time_validated, &date_validate) == -1) {
-                    return;
-                }
-                DELAY100MS(); 
-            }
-            break;
-
-        case 2:
-            while(!askTimeHourDataEthernet(&time_in_sec, time_pointer, 0, 1, &time_validated, &date_validate)) { 
-                if (askTimeHourDataEthernet(&time_in_sec, time_pointer, 0, 1, &time_validated, &date_validate) == -1) {
-                    return;
-                }
-                DELAY100MS(); 
-            }
-            break;
-
-        case 3:
-        while(!askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 1, &time_validated, &date_validate)) { 
-                if (askTimeHourDataEthernet(&time_in_sec, time_pointer, 1, 1, &time_validated, &date_validate) == -1) {
-                    return;
-                }
-                DELAY100MS(); 
-            }
-        
-            break;
-
-        case 4:
-            clearScreenEthernet();
-
-        	setState(INITIAL);
-            return;
-
-        default:
-            tcp_tick(&socket);
-            clearScreenEthernet();
-            printEthernet("Por favor seleccione una de las opciones posibles\n\n");
-            return;
-    }
-
-    if (!(time_validated & date_validate)) {
-        return;
-    }
-
-    setClock(&time_in_sec, time_pointer);
 }
 
 /*** BeginHeader askTimeHourDataEthernet */
@@ -316,4 +235,57 @@ void setClock(unsigned long *time_in_sec, struct tm *time_pointer) {
     SEC_TIMER = (*time_in_sec);
 
     clearScreenEthernet();
+}
+
+/*** BeginHeader needUpdate */
+void needUpdate();
+/*** EndHeader */
+void needUpdate() {
+    struct tm time, *time_pointer, utc, *utc_pointer;
+    char trama[85];
+    unsigned long utm_in_sec;
+
+    utm_in_sec = mk_time(*utc_pointer);
+    
+    time_pointer = &time;
+    utc_pointer = &utc;
+
+    GPS_gets(trama);
+
+    // convert to time structure
+    mktm(time_pointer, time_in_sec);
+
+    switch()
+
+    if (gps_get_utc(utc_pointer, trama)) {
+        converterTimeZone(utc_pointer);
+        
+        if (utc.tm_year == time.tm_year &
+            utc.tm_mon == time.tm_mon &
+            utc.tm_mday == time.tm_mday &
+            utc.tm_hour == time.tm_hour &
+            utc.tm_min == time.tm_min) {
+
+            if (utc.tm_sec > time.tm_sec) {
+                if (utc.tm_sec - time.tm_sec < 15) {
+                    setClock(&utm_in_sec, utc_pointer);
+                }
+            } else {
+                if (time.tm_sec - utc.tm_sec < 15) {
+                    setClock(&utm_in_sec, utc_pointer);
+                }
+            }
+        }
+    }
+}
+
+
+/*** BeginHeader convertTimeZone */
+void convertTimeZone(struct tm *utc_pointer);
+/*** EndHeader */
+ void convertTimeZone(struct tm *utc_pointer, unsigned long *utm_in_sec) {
+    
+    *utm_in_sec = *utm_in_sec - 10800L                  // 3600 sec * 3 = 10800 = 3 hours
+
+    mktm(utc_pointer, utm_in_sec);
 }
