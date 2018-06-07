@@ -93,17 +93,11 @@ void getPosition(GPSPosition *position_pointer);
 void getPosition(GPSPosition *position_pointer) {
     char trama[85];
 
-    GPS_gets(trama);
+    while (!GPS_gets(trama)) {
+        OSTimeDlyHMSM (0, 0, 0, 100);
+    }
 
     gps_get_position(position_pointer, trama);
-}
-
-/*** BeginHeader getLink */
-char * getLink();
-/*** EndHeader */
-
-char * getLink() {
-    return "​http://maps.google.com/?q=";
 }
 
 /*** BeginHeader generateLinkPosition */
