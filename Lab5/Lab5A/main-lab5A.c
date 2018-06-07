@@ -20,17 +20,18 @@ updateRTCTask.      Update RTC.
 #define OS_MEM_EN               1   
 #define OS_TASK_CREATE_EN		1       // Enable normal task creation
 #define OS_TASK_CREATE_EXT_EN	0       // Disable extended task creation
+#define OS_TASK_DEL_EN          1       // Enable OSTaskDel()
 #define OS_TIME_DLY_HMSM_EN	    1		// Enable OSTimeDlyHMSM
 #define STACK_CNT_512	        8       // number of 512 byte stacks (application tasks + stat task + prog stack)
 #define STACK_CNT_2K         	5		// TCP/IP needs a 2K stack
 #define TCP_BUF_SIZE            4096	// Make the TCP tx and rx buffers 4K each
 #define MAX_TCP_SOCKET_BUFFERS  1		// One sockets for TCPIP connection.
 
+#use LAB5_SYSTEM.LIB
 #use LAB5_IO.LIB
 #use LAB5_MENU.LIB
 #use LAB5_CLOCK.LIB
 #use LAB5_EVENT.LIB
-#use LAB5_SYSTEM.LIB
 #use LAB5_PIC.LIB
 #use LAB5_UCOS.LIB
 #use LAB5_ETHERNET.LIB
@@ -167,10 +168,11 @@ void  checkEventsTask (void *data) {
 *********************************************************************************************************
 */
 
-void  void updateRTCTask(void *data) {
+void updateRTCTask(void *data) {
     while(1) {
-        needUpdate();
+        //needUpdate();
+        generateLinkPosition();
 
-        OSTimeDlyHMSM (0, 5, 0, 0)
+        OSTimeDlyHMSM (0, 5, 0, 0);
     }
 }

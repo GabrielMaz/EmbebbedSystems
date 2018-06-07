@@ -1,5 +1,4 @@
 /*** BeginHeader */
-#use GPS.lib
 
 #define BINBUFSIZE 		        255
 #define BOUTBUFSIZE 		    255
@@ -10,8 +9,12 @@
 #define GPS_VALID_DATA_IDX	    18
 #define GPS_VALID_DATA		    'A'
 #define GPS_VOID_DATA		    'V'
+#define LINK                    "​http://maps.google.com/?q="
+
+#use GPS.LIB
 
 GPSPosition gpsPosition;
+
 /*** EndHeader */
 
 /*** BeginHeader GPS_init */
@@ -41,7 +44,7 @@ void GPS_init( void ) {
 	OSTimeDlyHMSM(0,0,0,100);
 	serBputs("$PSRF103,08,00,00,01*2C\r\n");	//ZDA - off
 
-  OSTaskDel(OS_PRIO_SELF);
+    OSTaskDel(OS_PRIO_SELF);
 }
 
 /*** BeginHeader GPS_gets */
@@ -81,4 +84,48 @@ int GPS_gets( char* p_str ) {
     } else {
         return 0;
     }
+}
+
+/*** BeginHeader getPosition */
+void getPosition(GPSPosition *position_pointer);
+/*** EndHeader */
+
+void getPosition(GPSPosition *position_pointer) {
+    char trama[85];
+
+    GPS_gets(trama);
+
+    gps_get_position(position_pointer, trama);
+}
+
+/*** BeginHeader getLink */
+char * getLink();
+/*** EndHeader */
+
+char * getLink() {
+    return "​http://maps.google.com/?q=";
+}
+
+/*** BeginHeader generateLinkPosition */
+void generateLinkPosition();
+/*** EndHeader */
+
+void generateLinkPosition() {
+    GPSPosition gpsPosition, *gpsPosition_pointer;
+    char result[46];
+    
+    gpsPosition_pointer = &gpsPosition;
+
+    getPosition(gpsPosition_pointer);
+
+    sprintf(result, "%s%d.%d%c,%d.%d%c", 
+    LINK, 
+    gpsPosition.lat_degrees, 
+    gpsPosition.lat_minutes/60, 
+    gpsPosition.lat_direction, 
+    gpsPosition.long_degrees, 
+    gpsPosition.long_minutes/60, 
+    gpsPosition.long_direction);
+
+    printEthernet(result);
 }

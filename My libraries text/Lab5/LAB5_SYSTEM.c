@@ -9,7 +9,7 @@
 enum STATE {
     MENU = 0,
     DISPLAY_HOUR = 1,
-    INPUT_HOUR = 2,
+    DISPLAY_POSITION = 2,
     LIST_EVENTS = 3,
     ADD_EVENT = 4,
     DELETE_EVENT = 5,

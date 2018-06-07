@@ -12,7 +12,7 @@ void menuUI();
 /*** EndHeader */
 
 void menuUI() {
-    printEthernet("Menu: \n\n1 - Mostrar hora \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2 \n\nSeleccione una opcion: ");
+    printEthernet("Menu: \n\n1 - Mostrar ubicacion \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2 \n\nSeleccione una opcion: ");
 }
 
 /*** BeginHeader optionSelected */
@@ -51,7 +51,7 @@ void optionSelected() {
         case 2:
             clearScreenEthernet();
 
-            setState(INPUT_HOUR);
+            setState(DISPLAY_POSITION);
             break;
 
         case 3:
@@ -171,9 +171,9 @@ void selectOption(int state) {
             setState(INITIAL);
             break;
 
-        case INPUT_HOUR:
-            inputHourUI();
-            setDate();
+        case DISPLAY_POSITION:
+            //generateLinkPosition();
+            setState(INITIAL);
             break;
 
         case LIST_EVENTS:
