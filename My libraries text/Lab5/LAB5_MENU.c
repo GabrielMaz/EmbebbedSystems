@@ -24,7 +24,7 @@ void optionSelected() {
     int option;
 
     while (!(sock_gets(&socket, data, 4))) {
-        DELAY100MS();
+        OSTimeDlyHMSM (0, 0, 0, BASIC_DELAY);
     }
     
     option = converter(data);
@@ -206,13 +206,13 @@ void selectOption(int state) {
         
         case ANALOG_INPUT_0:
             getAnalogInput(0);
-            DELAY_MS(PIC_TIMEOUT);
+            OSTimeDlyHMSM (0, 0, 0, PIC_TIMEOUT);
             setState(INITIAL);
             break;
 
         case ANALOG_INPUT_1:
             getAnalogInput(1);
-            DELAY_MS(PIC_TIMEOUT);
+            OSTimeDlyHMSM (0, 0, 0, PIC_TIMEOUT);
             setState(INITIAL);
             break;
     }

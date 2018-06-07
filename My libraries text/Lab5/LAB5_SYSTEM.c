@@ -1,7 +1,8 @@
 /*** BeginHeader */
 
 #define CLEAR_SCREEN() (printf(" \x1Bt"));
-#define MAX_INTERFACES 2
+#define MAX_INTERFACES  2
+#define BASIC_DELAY     100
 
 #use LAB5_IO.LIB
 #use LAB5_EVENT.LIB

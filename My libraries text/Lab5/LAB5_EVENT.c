@@ -225,7 +225,7 @@ void getEventName(char *name);
 void getEventName(char *name) {
     printEthernet("\nPor favor ingrese un nombre para el evento (maximo 10 caracteres): ");
     CLEAR_BUFFER();
-    while(!sock_gets(&socket, name, 11)) { ucosDelay(0, 0, 0, 100); }
+    while(!sock_gets(&socket, name, 11)) { OSTimeDlyHMSM (0, 0, 0, BASIC_DELAY); }
     
     CLEAR_SOCKET();
     
@@ -266,7 +266,7 @@ void getEventLeds(char* leds) {
     printEthernet("\nPor favor ingrese una cadena de largo 8 de 0 o 1 para la salida de los leds: ");
     CLEAR_BUFFER();
 
-    while(!(sock_gets(&socket, leds, 9))) { ucosDelay(0, 0, 0, 100); }
+    while(!(sock_gets(&socket, leds, 9))) { OSTimeDlyHMSM (0, 0, 0, BASIC_DELAY); }
 
     CLEAR_SOCKET();
 
@@ -328,7 +328,7 @@ void deleteEventEthernetUI() {
     printEthernet("\nIngrese numero de evento a eliminar: ");
     CLEAR_BUFFER();
 
-    while(!sock_gets(&socket, data, 4)) { ucosDelay(0, 0, 0, 100); }
+    while(!sock_gets(&socket, data, 4)) { OSTimeDlyHMSM (0, 0, 0, BASIC_DELAY); }
     option = converter(data) - 1;
 
     CLEAR_SOCKET();

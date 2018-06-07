@@ -33,9 +33,13 @@ updateRTCTask.      Update RTC.
 #use LAB5_CLOCK.LIB
 #use LAB5_EVENT.LIB
 #use LAB5_PIC.LIB
-#use LAB5_UCOS.LIB
 #use LAB5_ETHERNET.LIB
 #use LAB5_GPS_Custom.LIB
+
+#use "ucos2.lib"
+
+OS_EVENT *clockSem;
+UBYTE err;
 
 /*
 *********************************************************************************************************

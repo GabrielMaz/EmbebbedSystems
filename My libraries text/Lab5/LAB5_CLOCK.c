@@ -55,11 +55,11 @@ int askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer,
 int askTimeHourDataEthernet(unsigned long *time_in_sec, struct tm *time_pointer, int ask_time, int ask_date, int *time_validate, int *date_validate) {
 
     if (ask_time) {
-        while(!getTimeEthernet(time_pointer, time_validate)) { DELAY100MS(); }
+        while(!getTimeEthernet(time_pointer, time_validate)) { OSTimeDlyHMSM (0, 0, 0, BASIC_DELAY); }
     }
 
     if (ask_date & *time_validate) {
-        while(!getDateEthernet(time_pointer, date_validate)) { DELAY100MS(); }
+        while(!getDateEthernet(time_pointer, date_validate)) { OSTimeDlyHMSM (0, 0, 0, BASIC_DELAY); }
     }
     
     if (*time_validate & *date_validate) {
@@ -85,13 +85,13 @@ int getTimeEthernet(struct tm *time_pointer, int *time_validate) {
     CLEAR_BUFFER();
 
     printEthernet("\nIngrese hora: ");
-    while(!sock_gets(&socket, hour, 3)) { ucosDelay(0, 0, 0, 100); }
+    while(!sock_gets(&socket, hour, 3)) { OSTimeDlyHMSM (0, 0, 0, BASIC_DELAY); }
     CLEAR_SOCKET();
     printEthernet("\nIngrese minutos: ");
-    while(!sock_gets(&socket, min, 3)) { ucosDelay(0, 0, 0, 100); }
+    while(!sock_gets(&socket, min, 3)) { OSTimeDlyHMSM (0, 0, 0, BASIC_DELAY); }
     CLEAR_SOCKET();
     printEthernet("\nIngrese segundos: ");
-    while(!sock_gets(&socket, sec, 3)) { ucosDelay(0, 0, 0, 100); }
+    while(!sock_gets(&socket, sec, 3)) {OSTimeDlyHMSM (0, 0, 0, BASIC_DELAY); }
     CLEAR_SOCKET();
     
     sock_err:
@@ -157,13 +157,13 @@ int getDateEthernet(struct tm *time_pointer, int *date_validate) {
 
     // Get date info
     printEthernet("\nIngrese dia: ");
-    while(!sock_gets(&socket, day, 3)) { ucosDelay(0, 0, 0, 100); }
+    while(!sock_gets(&socket, day, 3)) { OSTimeDlyHMSM (0, 0, 0, BASIC_DELAY); }
     CLEAR_SOCKET();
     printEthernet("\nIngrese mes: ");
-    while(!sock_gets(&socket, month, 3)) { ucosDelay(0, 0, 0, 100); }
+    while(!sock_gets(&socket, month, 3)) { OSTimeDlyHMSM (0, 0, 0, BASIC_DELAY); }
     CLEAR_SOCKET();
     printEthernet("\nIngrese anio: ");
-    while(!sock_gets(&socket, year, 5)) { ucosDelay(0, 0, 0, 100); }
+    while(!sock_gets(&socket, year, 5)) { OSTimeDlyHMSM (0, 0, 0, BASIC_DELAY); }
     CLEAR_SOCKET();
 
     sock_err:
