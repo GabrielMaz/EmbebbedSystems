@@ -5,7 +5,7 @@
 
 #use "ucos2.lib"
 
-OS_EVENT        *randomSem;
+OS_EVENT *clockSem;
 UBYTE err;
 
 /*** EndHeader */
