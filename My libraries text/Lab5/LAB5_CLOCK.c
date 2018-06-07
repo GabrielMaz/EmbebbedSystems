@@ -263,23 +263,12 @@ void needUpdate() {
 
     if (gps_get_utc(utc_pointer, trama)) {
         convertTimeZone(utc_pointer, &utm_in_sec);
-        
-        if (utc.tm_year == time.tm_year &
-            utc.tm_mon == time.tm_mon &
-            utc.tm_mday == time.tm_mday &
-            utc.tm_hour == time.tm_hour &
-            utc.tm_min == time.tm_min) {
 
-            if (utc.tm_sec > time.tm_sec) {
-                if (utc.tm_sec - time.tm_sec < 15) {
-                    setClock(&utm_in_sec, utc_pointer);
-                }
+        // if difference between utm_in_sec and time_in_sec is bigger than 15 sec
+        // then update the clock
 
-            } else {
-                if (time.tm_sec - utc.tm_sec < 15) {
-                    setClock(&utm_in_sec, utc_pointer);
-                }
-            }
+        if (utm_in_sec - time_in_sec > 15 | time_in_sec - utm_in_sec > 15) {
+            setClock(&utm_in_sec, utc_pointer);
         }
     }
 }
