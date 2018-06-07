@@ -156,6 +156,7 @@ void selectOption(int state);
 /*** EndHeader */
 
 void selectOption(int state) {
+    auto INT8U err;
     switch(state){
         case INITIAL:
             menuUI();
@@ -167,7 +168,9 @@ void selectOption(int state) {
             break;
 
         case DISPLAY_HOUR:
+            OSSemPend(clockSem, 0, &err);
             displayHourUI(getRtcTime());
+            OSSemPost(clockSem);
             setState(INITIAL);
             break;
 

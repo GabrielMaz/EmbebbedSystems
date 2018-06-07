@@ -87,6 +87,8 @@ void main (void) {
 
     GPS_init();
 
+    clockSem = OSSemCreate(1);
+
     OSTaskCreate(redLedTask, NULL, 2048, TASK_1_PRIO);
 	OSTaskCreate(tickTask, NULL, 2048, TASK_2_PRIO);
     OSTaskCreate(ethernetTask, NULL, 2048, TASK_3_PRIO);
@@ -170,8 +172,9 @@ void  checkEventsTask (void *data) {
 
 void updateRTCTask(void *data) {
     while(1) {
+
         //needUpdate();
-        generateLinkPosition();
+        //generateLinkPosition();
 
         OSTimeDlyHMSM (0, 5, 0, 0);
     }

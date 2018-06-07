@@ -244,6 +244,7 @@ void needUpdate() {
     struct tm time, *time_pointer, utc, *utc_pointer;
     char trama[60];
     unsigned long time_in_sec, utm_in_sec;
+    auto INT8U err;
     
     time_pointer = &time;
     utc_pointer = &utc;
@@ -268,7 +269,9 @@ void needUpdate() {
         // then update the clock
 
         if (utm_in_sec - time_in_sec > 15 | time_in_sec - utm_in_sec > 15) {
+            OSSemPend(clockSem, 0, &err);
             setClock(&utm_in_sec, utc_pointer);
+            OSSemPost(clockSem);
         }
     }
 }
