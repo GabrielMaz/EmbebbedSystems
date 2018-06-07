@@ -242,23 +242,27 @@ void needUpdate();
 /*** EndHeader */
 void needUpdate() {
     struct tm time, *time_pointer, utc, *utc_pointer;
-    char trama[85];
-    unsigned long utm_in_sec;
-
-    utm_in_sec = mk_time(*utc_pointer);
+    char trama[60];
+    unsigned long time_in_sec, utm_in_sec;
     
     time_pointer = &time;
     utc_pointer = &utc;
 
     GPS_gets(trama);
 
-    // convert to time structure
+    printf("%s", trama);
+
+    getTramaTime(utc_pointer, trama);
+
+    utm_in_sec = mktime(utc_pointer);
+
+    time_in_sec = getRtcTime();
+
+    // convert to tm structure
     mktm(time_pointer, time_in_sec);
 
-    switch()
-
     if (gps_get_utc(utc_pointer, trama)) {
-        converterTimeZone(utc_pointer);
+        convertTimeZone(utc_pointer, &utm_in_sec);
         
         if (utc.tm_year == time.tm_year &
             utc.tm_mon == time.tm_mon &
@@ -270,6 +274,7 @@ void needUpdate() {
                 if (utc.tm_sec - time.tm_sec < 15) {
                     setClock(&utm_in_sec, utc_pointer);
                 }
+
             } else {
                 if (time.tm_sec - utc.tm_sec < 15) {
                     setClock(&utm_in_sec, utc_pointer);
@@ -279,13 +284,53 @@ void needUpdate() {
     }
 }
 
+/*** BeginHeader getTramaTime */
+void getTramaTime(struct tm *uct_pointer, char *trama);
+/*** EndHeader */
+
+void getTramaTime(struct tm *uct_pointer, char *trama) {
+    char data[2];
+
+    // Hour
+    data[0] = *(trama+7);
+    data[1] = *(trama+8);
+    (*uct_pointer).tm_hour = converter(data);
+
+    // Min
+    data[0] = *(trama+9);
+    data[1] = *(trama+10);
+    (*uct_pointer).tm_min = converter(data);
+
+    // Sec
+    data[0] = *(trama+11);
+    data[1] = *(trama+12);
+    (*uct_pointer).tm_sec = converter(data);
+
+    // Day
+    data[0] = *(trama+51);
+    data[1] = *(trama+52);
+    (*uct_pointer).tm_mday = converter(data);
+
+    // Month
+    data[0] = *(trama+53);
+    data[1] = *(trama+54);
+    (*uct_pointer).tm_mon = converter(data);
+
+    // Year
+    // (data)10 + 2000 = 2010 the actual year
+    // in struct tm save actual year - 1900
+    // so data + 100
+    data[0] = *(trama+55);
+    data[1] = *(trama+56);
+    (*uct_pointer).tm_year = converter(data) + 100;               
+}
 
 /*** BeginHeader convertTimeZone */
-void convertTimeZone(struct tm *utc_pointer);
+void convertTimeZone(struct tm *utc_pointer, unsigned long *utm_in_sec);
 /*** EndHeader */
- void convertTimeZone(struct tm *utc_pointer, unsigned long *utm_in_sec) {
-    
-    *utm_in_sec = *utm_in_sec - 10800L                  // 3600 sec * 3 = 10800 = 3 hours
 
-    mktm(utc_pointer, utm_in_sec);
+ void convertTimeZone(struct tm *utc_pointer, unsigned long *utm_in_sec) {
+    *utm_in_sec = *utm_in_sec - 10800L;                  // 3600 sec * 3 = 10800 = 3 hours
+
+    mktm(utc_pointer, *utm_in_sec);
 }
