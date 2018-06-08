@@ -1,15 +1,15 @@
-/*** BeginHeader sendMessage*/
+/*** BeginHeader sendMessage */
 void sendMessage(char *message);
-/*** EdnHeader */
+/*** EndHeader */
 
 void sendMessage(char *message) {
     serDputs(message);
     serDputc('\n');
 }
 
-/*** BeginHeader readMessage*/
+/*** BeginHeader readMessage */
 void readMessage(char *result);
-/*** EdnHeader */
+/*** EndHeader */
 
 void readMessage(char *result) {
     char result[100];

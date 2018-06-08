@@ -32,7 +32,7 @@ sendTask:			Sent to modem the info write in console.
 #use LAB5_UCOS.LIB
 #use LAB5_ETHERNET.LIB
 #use LAB5_GPS_Custom.LIB
-#use LAB5_GPRS
+#use LAB5_GPRS.LIB
 
 /*
 *********************************************************************************************************
