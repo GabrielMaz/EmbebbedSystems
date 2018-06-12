@@ -28,6 +28,9 @@ void initSystem();
 
 void initSystem() {
     configurePorts();
+    printf("Iniciando Socket\n");
+	sock_init();
+	printf("Iniciado\n");
     initEvents();
     setState(INITIAL);
     events_actived = 0;

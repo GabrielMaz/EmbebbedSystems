@@ -12,7 +12,7 @@ void menuUI();
 /*** EndHeader */
 
 void menuUI() {
-    printEthernet("Menu: \n\n1 - Mostrar ubicacion \n\n2 - Cambiar fecha y hora \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2 \n\nSeleccione una opcion: ");
+    printEthernet("Menu: \n\n1 - Mostrar hora \n\n2 - Mostrar ubicacion \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2 \n\nSeleccione una opcion: ");
 }
 
 /*** BeginHeader optionSelected */
@@ -26,25 +26,15 @@ void optionSelected() {
     while (!(sock_gets(&socket, data, 4))) {
         DELAY100MS();
     }
-    
+
     option = converter(data);
 
     CLEAR_SOCKET();
 
-    sock_err:
-    switch(status) {
-        case 1: /* foreign host closed */
-            printf("User closed session\n");
-            break;
-        case -1: /* time-out */
-            printf("Connection timed out\n");
-            break;
-    }
-    
     switch (option) {
         case 1:
             clearScreenEthernet();
-            
+
             setState(DISPLAY_HOUR);
             break;
 
@@ -68,7 +58,7 @@ void optionSelected() {
 
         case 6:
             clearScreenEthernet();
-            
+
             setState(ANALOG_INPUT_0);
             break;
 
@@ -82,7 +72,7 @@ void optionSelected() {
             clearScreenEthernet();
             printEthernet("Por favor seleccione una de las opciones posibles\n\n");
             return;
-            
+
     }
 }
 
@@ -175,14 +165,14 @@ void selectOption(int state) {
             break;
 
         case DISPLAY_POSITION:
-            //generateLinkPosition();
+            generateLinkPosition();
             setState(INITIAL);
             break;
 
         case LIST_EVENTS:
             clearScreenEthernet();
             printEventsEthernet();
-            
+
             setState(INITIAL);
             break;
 
@@ -196,7 +186,7 @@ void selectOption(int state) {
                 clearScreenEthernet();
                 printEventsEthernet();
                 deleteEventEthernetUI();
-            
+
             } else {
                 clearScreenEthernet();
                 printEthernet("No hay eventos para eliminar\n");
@@ -204,9 +194,9 @@ void selectOption(int state) {
             clearScreenEthernet();
 
             setState(INITIAL);
-            
+
             break;
-        
+
         case ANALOG_INPUT_0:
             getAnalogInput(0);
             DELAY_MS(PIC_TIMEOUT);

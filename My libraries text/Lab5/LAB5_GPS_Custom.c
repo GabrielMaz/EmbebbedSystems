@@ -98,6 +98,7 @@ void getPosition(GPSPosition *position_pointer) {
     }
 
     gps_get_position(position_pointer, trama);
+    printf("\n%s\n", trama);
 }
 
 /*** BeginHeader generateLinkPosition */
@@ -107,19 +108,22 @@ void generateLinkPosition();
 void generateLinkPosition() {
     GPSPosition gpsPosition, *gpsPosition_pointer;
     char result[46];
+    float latitude, longitude;
     
     gpsPosition_pointer = &gpsPosition;
 
     getPosition(gpsPosition_pointer);
 
-    sprintf(result, "%s%d.%d%c,%d.%d%c", 
-    LINK, 
-    gpsPosition.lat_degrees, 
-    gpsPosition.lat_minutes/60, 
-    gpsPosition.lat_direction, 
-    gpsPosition.long_degrees, 
-    gpsPosition.long_minutes/60, 
-    gpsPosition.long_direction);
+    latitude = gpsPosition.lat_degrees + (float) gpsPosition.lat_minutes/60;
+
+    longitude = gpsPosition.lon_degrees + (float) gpsPosition.lon_minutes/60;
+
+    sprintf(result, "%s%f%c,%f%c", 
+        LINK, 
+        latitude, 
+        gpsPosition.lat_direction, 
+        longitude, 
+        gpsPosition.lon_direction);
 
     printEthernet(result);
 }

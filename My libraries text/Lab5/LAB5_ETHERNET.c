@@ -31,24 +31,15 @@ void initSocket();
 /*** EndHeader */
 
 void initSocket() {
-    printf("Iniciando Socket\n");
-	sock_init();
-	printf("Iniciado\n");
 
     tcp_listen(&socket,PORT,0,0,NULL,0);
-    sock_wait_established(&socket,sock_delay,NULL,&status)
+    while(!sock_established(&socket) && (sock_bytesready(&socket)==-1))
+    {
+        tcp_tick(&socket);
+        OSTimeDlyHMSM(0,0,0,100);
+    }
     printf("Conectado\n");
     sock_mode(&socket,TCP_MODE_ASCII);
-
-    sock_err:
-    switch(status) {
-        case 1: /* foreign host closed */
-            printf("User closed session\n");
-            break;
-        case -1: /* time-out */
-            printf("Connection timed out\n");
-            break;
-    }
 }
 
 /*** BeginHeader clearScreenEthernet */

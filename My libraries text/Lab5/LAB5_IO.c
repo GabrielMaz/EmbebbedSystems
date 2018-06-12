@@ -26,8 +26,8 @@ void configurePorts(){
     WrPortI(PADR, &PADRShadow, 0x00);
 
     // setup port E as output
-    BitWrPortI(PEDDR, &SPCRShadow, PORT_OUTPUT, 5);
-
+    BitWrPortI(PEDDR, &PEDDRShadow, PORT_OUTPUT, 5);
+    
 	// serial port
 	serCopen(PIC_BAUDRATE);
 }
