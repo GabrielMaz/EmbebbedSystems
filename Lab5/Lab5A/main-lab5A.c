@@ -26,16 +26,16 @@ updateRTCTask.      Update RTC.
 #define STACK_CNT_2K         	5		// TCP/IP needs a 2K stack
 #define MAX_TCP_SOCKET_BUFFERS  1		// One sockets for TCPIP connection.
 
-#use LAB5_SYSTEM.LIB
-#use LAB5_IO.LIB
-#use LAB5_MENU.LIB
-#use LAB5_CLOCK.LIB
-#use LAB5_EVENT.LIB
-#use LAB5_PIC.LIB
-#use LAB5_UCOS.LIB
-#use LAB5_ETHERNET.LIB
-#use LAB5_GPS_Custom.LIB
-#use LAB5_GPRS.LIB
+#use FINAL_SYSTEM.LIB
+#use FINAL_IO.LIB
+#use FINAL_MENU.LIB
+#use FINAL_CLOCK.LIB
+#use FINAL_EVENT.LIB
+#use FINAL_PIC.LIB
+#use FINAL_UCOS.LIB
+#use FINAL_ETHERNET.LIB
+#use FINAL_GPS_Custom.LIB
+#use FINAL_GPRS.LIB
 
 /*
 *********************************************************************************************************
