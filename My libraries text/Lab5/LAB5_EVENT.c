@@ -390,7 +390,6 @@ void checkEventsActivated() {
     int i;
     struct tm time, *time_pointer, event_time, *event_time_pointer;
     unsigned long time_in_sec;
-    int show;
     char *shadow;
 
     time_in_sec = getRtcTime();

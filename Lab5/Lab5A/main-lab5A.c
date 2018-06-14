@@ -24,7 +24,6 @@ updateRTCTask.      Update RTC.
 #define STACK_CNT_256	        1       // idle task
 #define STACK_CNT_512	        8       // number of 512 byte stacks (application tasks + stat task + prog stack)
 #define STACK_CNT_2K         	5		// TCP/IP needs a 2K stack
-//#define TCP_BUF_SIZE            4096	// Make the TCP tx and rx buffers 4K each
 #define MAX_TCP_SOCKET_BUFFERS  1		// One sockets for TCPIP connection.
 
 #use LAB5_SYSTEM.LIB
@@ -36,6 +35,7 @@ updateRTCTask.      Update RTC.
 #use LAB5_UCOS.LIB
 #use LAB5_ETHERNET.LIB
 #use LAB5_GPS_Custom.LIB
+#use LAB5_GPRS.LIB
 
 /*
 *********************************************************************************************************
@@ -89,6 +89,9 @@ void main (void) {
     // Una vez que se ejecuta se autodestruye.
     OSTaskCreate(GPS_init, NULL, 512, TASK_START_PRIO);
 
+    while(!modemReady());
+    while(!synchronizeRabbit());
+
     OSTaskCreate(redLedTask, NULL, 2048, TASK_1_PRIO);
 	OSTaskCreate(tickTask, NULL, 2048, TASK_2_PRIO);
     OSTaskCreate(ethernetTask, NULL, 2048, TASK_3_PRIO);
@@ -127,7 +130,7 @@ void  tickTask (void *data) {
         initSocket();
         while( tcp_tick(&socket) )
         {
-            OSTimeDlyHMSM(0,0,0,100); // Hago tcp_tick 10 veces por segundo
+            OSTimeDlyHMSM(0,0,0,100);                   // Hago tcp_tick 10 veces por segundo
         }
     }
 }

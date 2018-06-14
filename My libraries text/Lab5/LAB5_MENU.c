@@ -2,6 +2,7 @@
 #use LAB5_SYSTEM.LIB
 #use LAB5_ETHERNET.LIB
 #use LAB5_UCOS.LIB
+#use LAB5_GPRS.LIB
 
 #define CLIENTS 50
 
@@ -12,7 +13,7 @@ void menuUI();
 /*** EndHeader */
 
 void menuUI() {
-    printEthernet("Menu: \n\n1 - Mostrar hora \n\n2 - Mostrar ubicacion \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2 \n\nSeleccione una opcion: ");
+    printEthernet("Menu: \n\n1 - Mostrar hora \n\n2 - Mostrar ubicacion \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2 \n\n8 - Mandar SMS \n\nSeleccione una opcion: ");
 }
 
 /*** BeginHeader optionSelected */
@@ -207,6 +208,10 @@ void selectOption(int state) {
             getAnalogInput(1);
             DELAY_MS(PIC_TIMEOUT);
             setState(INITIAL);
+            break;
+
+        case SMS:
+            send();
             break;
     }
 }

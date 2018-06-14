@@ -15,7 +15,8 @@ enum STATE {
     DELETE_EVENT = 5,
     ANALOG_INPUT_0 = 6,
     ANALOG_INPUT_1 = 7,
-    INITIAL = 8
+    INITIAL = 8,
+    SMS = 9
 };
 
 int current_state;
