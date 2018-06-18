@@ -13,7 +13,7 @@ void menuUI();
 /*** EndHeader */
 
 void menuUI() {
-    printEthernet("Menu: \n\n1 - Mostrar hora \n\n2 - Mostrar ubicacion \n\n3 - Ver eventos \n\n4 - Agregar evento \n\n5 - Eliminar evento \n\n6 - Mostrar entrada analogica 1 \n\n7 - Mostrar entrada analogica 2 \n\n8 - Mandar SMS \n\nSeleccione una opcion: ");
+    printEthernet("Menu: \n\n1 - Ver contactos \n\n2 - Agregar contacto \n\n3 - Eliminar contacto \n\nSeleccione una opcion: ");
 }
 
 /*** BeginHeader optionSelected */
@@ -34,39 +34,19 @@ void optionSelected() {
 
     switch (option) {
         case 1:
-            clearScreenEthernet();
-
-            setState(DISPLAY_HOUR);
+            setState(MENU);
             break;
-
+            
         case 2:
-            clearScreenEthernet();
-
-            setState(DISPLAY_POSITION);
+            setState(LIST_CONTACTS);
             break;
 
         case 3:
-            setState(LIST_EVENTS);
+            setState(ADD_CONTACT);
             break;
 
         case 4:
-            setState(ADD_EVENT);
-            break;
-
-        case 5:
-            setState(DELETE_EVENT);
-            break;
-
-        case 6:
-            clearScreenEthernet();
-
-            setState(ANALOG_INPUT_0);
-            break;
-
-        case 7:
-            clearScreenEthernet();
-
-            setState(ANALOG_INPUT_1);
+            setState(DELETE_CONTACT);
             break;
 
         default:
@@ -158,60 +138,32 @@ void selectOption(int state) {
             optionSelected();
             break;
 
-        case DISPLAY_HOUR:
-            OSSemPend(clockSem, 0, &err);
-            displayHourUI(getRtcTime());
-            OSSemPost(clockSem);
-            setState(INITIAL);
-            break;
-
-        case DISPLAY_POSITION:
-            generateLinkPosition();
-            setState(INITIAL);
-            break;
-
-        case LIST_EVENTS:
+        case LIST_CONTACTS:
             clearScreenEthernet();
-            printEventsEthernet();
+            printAgendaEthernet();
 
             setState(INITIAL);
             break;
 
-        case ADD_EVENT:
+        case ADD_CONTACT:
             createEventUi();
             setState(INITIAL);
             break;
 
-        case DELETE_EVENT:
+        case DELETE_CONTACT:
             if (events_actived > 0) {
                 clearScreenEthernet();
-                printEventsEthernet();
-                deleteEventEthernetUI();
+                printAgendaEthernet();
+                deleteContactEthernet();
 
             } else {
                 clearScreenEthernet();
-                printEthernet("No hay eventos para eliminar\n");
+                printEthernet("No hay contactos para eliminar\n");
             }
             clearScreenEthernet();
 
             setState(INITIAL);
 
-            break;
-
-        case ANALOG_INPUT_0:
-            getAnalogInput(0);
-            DELAY_MS(PIC_TIMEOUT);
-            setState(INITIAL);
-            break;
-
-        case ANALOG_INPUT_1:
-            getAnalogInput(1);
-            DELAY_MS(PIC_TIMEOUT);
-            setState(INITIAL);
-            break;
-
-        case SMS:
-            send();
             break;
     }
 }

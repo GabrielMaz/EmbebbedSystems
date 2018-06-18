@@ -2,6 +2,10 @@
 #use FINAL_SYSTEM.LIB
 #use FINAL_UCOS.LIB
 
+#define GPRS_PWKEY                      4
+#define GPRS_STATUS                     1
+#define MESSAGE_ACCIDENT                "CHOCO EL VEHICULO"
+
 /*** EndHeader */
 
 /*** BeginHeader modemReady */
@@ -20,13 +24,15 @@ int modemReady() {
         setOutput(PORT_E, GPRS_PWKEY, 0);
 
         // delay > 1 s
-        DELAY_S_MS(1, 200);
+        DELAY_S_MS(1, 100);
 
         BitWrPortI(PEDDR, &PEDDRShadow, PORT_INPUT, 4);
 
         // delay > 2 s
-        DELAY_S_MS(2, 200);
+        DELAY_S_MS(2, 100);
 
+        
+        //if (!BitRdPortI(PORT_E, GPRS_STATUS)) {
         if (!getInput(PORT_E, GPRS_STATUS)) {
             printf("Se prendio el modem");
             return 1;
@@ -53,10 +59,11 @@ int synchronizeRabbit() {
     while(!serDread(response, 2, 500));
 
     // Check if response is OK
-    if (response[0] = 'O' & response[1] = 'K') {
+    if (response[0] == 'O' & response[1] == 'K') {
+        printf("\nSe sincronizo el rabbit");
         return 1;
     }
-
+    printf("\nNo se sincronizo el rabbit");
     return 0;
 }
 
@@ -103,32 +110,27 @@ void send() {
     serDputc(0x1A);
 }
 
-/*** BeginHeader askName */
-void askName(char *name);
+/*** BeginHeader sendAllContacts */
+void sendAllContacts();
 /*** EndHeader */
 
-void askName(char *name) {
-    printEthernet("\nIngrese nombre (maximo 10 caracteres: ");
-    while(!sock_gets(&socket, name, 11)) { DELAY100MS(); }
-    CLEAR_SOCKET();
-}
+void sendAllContacts() {
+    int i;
+    char result[50];
 
-/*** BeginHeader askPhone */
-void askPhone(char *phone);
-/*** EndHeader */
+    for (i=0; i<5; i++) {
+        if (contacts[i].array_postion != -1) {
 
-void askPhone(char *phone) {
-    printEthernet("\nIngrese celular: ");
-    while(!sock_gets(&socket, phone, 9)) { DELAY100MS(); }
-    CLEAR_SOCKET();
-}
+            sprintf(result, "AT+CMGS=\"");
+            strcat(result, contacts[i].phone);
+            strcat(result, "\"");
+            serDputs(result);
 
-/*** BeginHeader askMsg */
-void askMsg(char *msg);
-/*** EndHeader */
+            serDputc(0x0D);
 
-void askMsg(char *msg) {
-    printEthernet("\nIngrese nombre (maximo 15 caracteres: ");
-    while(!sock_gets(&socket, msg, 15)) { DELAY100MS(); }
-    CLEAR_SOCKET();
+            serDputs(MESSAGE_ACCIDENT);
+
+            serDputc(0x1A);
+        }
+    }
 }

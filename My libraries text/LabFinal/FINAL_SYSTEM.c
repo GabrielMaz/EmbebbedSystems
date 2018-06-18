@@ -7,16 +7,11 @@
 #use FINAL_EVENT.LIB
 
 enum STATE {
-    MENU = 0,
-    DISPLAY_HOUR = 1,
-    DISPLAY_POSITION = 2,
-    LIST_EVENTS = 3,
-    ADD_EVENT = 4,
-    DELETE_EVENT = 5,
-    ANALOG_INPUT_0 = 6,
-    ANALOG_INPUT_1 = 7,
-    INITIAL = 8,
-    SMS = 9
+    INITIAL = 0,
+    MENU = 1,
+    LIST_CONTACTS = 2,
+    ADD_CONTACT = 3,
+    DELETE_CONTACT = 4,
 };
 
 int current_state;
@@ -32,7 +27,7 @@ void initSystem() {
     printf("Iniciando Socket\n");
 	sock_init();
 	printf("Iniciado\n");
-    initEvents();
+    initAgenda();
     setState(INITIAL);
     events_actived = 0;
 }

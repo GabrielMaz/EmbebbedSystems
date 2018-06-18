@@ -281,7 +281,7 @@ void getEventLeds(char* leds) {
     }
 }
 
-/*** BeginHeader */
+/*** BeginHeader printCharInbin */
 void printCharInbin(char data);
 /*** EndHeader */
 

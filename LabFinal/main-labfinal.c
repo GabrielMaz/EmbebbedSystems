@@ -3,10 +3,9 @@
 This program does the following:
 
 Start up task:  Creates 5 tasks.
-redLedTask:     	Turn on red led for 800 ms and turn it off for 400 ms.
 tickTask:			Excecute ticks to tcp connection.
 ethernetTask:		Excecute program by ethernet.
-checkEventsTask:	Check for events.
+checkSpeedTask: 	Check speed.
 updateRTCTask.      Update RTC.
 
 ********************************************************************************************************/
@@ -22,7 +21,7 @@ updateRTCTask.      Update RTC.
 #define OS_TASK_DEL_EN          1       // Enable OSTaskDel()
 #define OS_TIME_DLY_HMSM_EN	    1		// Enable OSTimeDlyHMSM
 #define STACK_CNT_256	        1       // idle task
-#define STACK_CNT_512	        8       // number of 512 byte stacks (application tasks + stat task + prog stack)
+#define STACK_CNT_512	        6       // number of 512 byte stacks (application tasks + stat task + prog stack)
 #define STACK_CNT_2K         	5		// TCP/IP needs a 2K stack
 #define MAX_TCP_SOCKET_BUFFERS  1		// One sockets for TCPIP connection.
 
@@ -36,6 +35,7 @@ updateRTCTask.      Update RTC.
 #use FINAL_ETHERNET.LIB
 #use FINAL_GPS_Custom.LIB
 #use FINAL_GPRS.LIB
+#use FINAL_AGENDA.LIB
 
 /*
 *********************************************************************************************************
@@ -65,10 +65,9 @@ updateRTCTask.      Update RTC.
 *********************************************************************************************************
 */
 
-void redLedTask(void *data);
 void tickTask(void *data);
 void ethernetTask(void *data);
-void checkEventsTask(void *data);
+void checkSpeedTask(void *data);
 void updateRTCTask(void *data);
 
 
@@ -92,10 +91,10 @@ void main (void) {
     while(!modemReady());
     while(!synchronizeRabbit());
 
-    OSTaskCreate(redLedTask, NULL, 2048, TASK_1_PRIO);
-	OSTaskCreate(tickTask, NULL, 2048, TASK_2_PRIO);
-    OSTaskCreate(ethernetTask, NULL, 2048, TASK_3_PRIO);
-	OSTaskCreate(checkEventsTask, NULL, 2048, TASK_4_PRIO);
+	OSTaskCreate(tickTask, NULL, 2048, TASK_1_PRIO);
+    OSTaskCreate(ethernetTask, NULL, 2048, TASK_2_PRIO);
+	OSTaskCreate(checkSpeedTask, NULL, 2048, TASK_3_PRIO);
+    OSTaskCreate(updateRTCTask, NULL, 2048, TASK_4_PRIO);
 
     OSStart();
 }
@@ -103,23 +102,6 @@ void main (void) {
 /*
 *********************************************************************************************************
 *                                               TASK #1
-*
-* Description: This task turn on red led for 800 ms and turn it off for 400 ms.
-*********************************************************************************************************
-*/
-
-void  redLedTask (void *pdata) {
-    while(1) {
-        OSTimeDlyHMSM(0, 0, 0, 800);
-        setOutput(PORT_E, BIT_5, 1);
-        OSTimeDlyHMSM(0, 0, 0, 400);
-        setOutput(PORT_E, BIT_5, 0);
-    }
-}
-
-/*
-*********************************************************************************************************
-*                                               TASK #2
 *
 * Description: This task excecute ticks to tcp connection.
 *********************************************************************************************************
@@ -137,7 +119,7 @@ void  tickTask (void *data) {
 
 /*
 *********************************************************************************************************
-*                                               TASK #3
+*                                               TASK #2
 *
 * Description: This task excecute program by ethernet.
 *********************************************************************************************************
@@ -153,23 +135,26 @@ void  ethernetTask (void *data) {
 
 /*
 *********************************************************************************************************
-*                                               TASK #4
+*                                               TASK #3
 *
-* Description: This task check for events.
+* Description: This task check the speed of the vehicle every 10 seconds, if it is over 10g,
+                it sends a sms.
 *********************************************************************************************************
 */
 
-void  checkEventsTask (void *data) {
+void  checkSpeedTask (void *data) {
     while(1) {
-        checkEventsActivated();
+        if (checkSpeed()) {
+            // alertar a todos los contactos
+        }
 
-        OSTimeDly(5);
+        OSTimeDlyHMSM(0, 0, 10, 0);
     }
 }
 
 /*
 *********************************************************************************************************
-*                                               TASK #5
+*                                               TASK #4
 *
 * Description: Update the rtc if the diference with GPS is bigger than 15 sec.
 *********************************************************************************************************
@@ -180,6 +165,6 @@ void updateRTCTask(void *data) {
         //needUpdate();
         generateLinkPosition();
 
-        OSTimeDlyHMSM (0, 5, 0, 0);
+        OSTimeDlyHMSM(0, 5, 0, 0);
     }
 }
