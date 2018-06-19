@@ -102,12 +102,11 @@ void getPosition(GPSPosition *position_pointer) {
 }
 
 /*** BeginHeader generateLinkPosition */
-void generateLinkPosition();
+void generateLinkPosition(char *result);
 /*** EndHeader */
 
 void generateLinkPosition() {
     GPSPosition gpsPosition, *gpsPosition_pointer;
-    char result[46];
     float latitude, longitude;
     
     gpsPosition_pointer = &gpsPosition;
@@ -124,6 +123,4 @@ void generateLinkPosition() {
         gpsPosition.lat_direction, 
         longitude, 
         gpsPosition.lon_direction);
-
-    printEthernet(result);
 }

@@ -24,6 +24,8 @@ updateRTCTask.      Update RTC.
 #define STACK_CNT_512	        6       // number of 512 byte stacks (application tasks + stat task + prog stack)
 #define STACK_CNT_2K         	5		// TCP/IP needs a 2K stack
 #define MAX_TCP_SOCKET_BUFFERS  1		// One sockets for TCPIP connection.
+#define DINBUFSIZE              255
+#define DOUTBUFSIZE             255
 
 #use FINAL_SYSTEM.LIB
 #use FINAL_IO.LIB
@@ -86,15 +88,15 @@ void main (void) {
 
     // GPS_init utiliza delays del sistema operativo, por lo tanto debe ser una tarea.
     // Una vez que se ejecuta se autodestruye.
-    OSTaskCreate(GPS_init, NULL, 512, TASK_START_PRIO);
+    //OSTaskCreate(GPS_init, NULL, 512, TASK_START_PRIO);
 
-    while(!modemReady());
-    while(!synchronizeRabbit());
+    //while(!modemReady());
+    //while(!synchronizeRabbit());
 
 	OSTaskCreate(tickTask, NULL, 2048, TASK_1_PRIO);
     OSTaskCreate(ethernetTask, NULL, 2048, TASK_2_PRIO);
 	OSTaskCreate(checkSpeedTask, NULL, 2048, TASK_3_PRIO);
-    OSTaskCreate(updateRTCTask, NULL, 2048, TASK_4_PRIO);
+    //OSTaskCreate(updateRTCTask, NULL, 2048, TASK_4_PRIO);
 
     OSStart();
 }
@@ -114,6 +116,7 @@ void  tickTask (void *data) {
         {
             OSTimeDlyHMSM(0,0,0,100);                   // Hago tcp_tick 10 veces por segundo
         }
+        OSTimeDlyHMSM(0,0,0,100);
     }
 }
 
@@ -143,12 +146,16 @@ void  ethernetTask (void *data) {
 */
 
 void  checkSpeedTask (void *data) {
+    char link[46];
+
     while(1) {
         if (checkSpeed()) {
+            //generateLinkPosition(link);
+            printf("Choque");
             // alertar a todos los contactos
         }
 
-        OSTimeDlyHMSM(0, 0, 10, 0);
+        OSTimeDlyHMSM(0, 0, 0, 100);
     }
 }
 
@@ -160,11 +167,17 @@ void  checkSpeedTask (void *data) {
 *********************************************************************************************************
 */
 
+// robando link position 
 void updateRTCTask(void *data) {
-    while(1) {
+    //while(1) {
         //needUpdate();
-        generateLinkPosition();
+    //    generateLinkPosition();
 
-        OSTimeDlyHMSM(0, 5, 0, 0);
-    }
+    //    OSTimeDlyHMSM(0, 5, 0, 0);
+    //}
+
+    char link[46];
+
+    //generateLinkPosition(link);
+    //printEthernet(link);
 }

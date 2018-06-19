@@ -21,6 +21,8 @@ void initAgenda() {
     int i;
     struct Contact contact;
 
+    contacts_actived = 0;
+
     for (i = 0; i < MAX_NUMBER_CONTACTS; i++){
         contact.array_postion = -1;
         contacts[i] = contact;
@@ -127,7 +129,10 @@ void addContact() {
             return;
         }
 
-        insertContact(contact_pointer);
+        if(!insertContact(contact_pointer)) {
+            printEthernet("No se pudo agregar el contacto");
+            return;
+        }
 
         clearScreenEthernet();
         printEthernet("Su contacto fue agregado a la agenda de contactos");
@@ -136,12 +141,14 @@ void addContact() {
 }
 
 /*** BeginHeader insertContact */
-void insertContact(struct Contact *contact);
+int insertContact(struct Contact *contact);
 /*** EndHeader */
 
-void insertContact(struct Contact *contact) {
-    int i;
-    unsigned long addr, blockSize;
+int insertContact(struct Contact *contact) {
+    int i, inserted;
+    unsigned int addr, blockSize;
+
+    inserted = 0;
 
     // Initial position to userBlock
     addr = 0;
@@ -155,16 +162,16 @@ void insertContact(struct Contact *contact) {
         if (contacts[i].array_postion == -1) {
             (*contact).array_postion = i;
             contacts[i] = (*contact);
-            contacts_actived += 1;
+            contacts_actived++;
+            inserted = 1;
+            writeUserBlock(addr, &contacts[i], blockSize);
             break;
         }
 
-        writeUserBlock(addr, &contacts[i].array_postion, 2);
-        writeUserBlock(addr+2, contacts[i].name, 11);
-        writeUserBlock(addr+13, contacts[i].array_postion, 9);
-
         addr += blockSize;
     }
+
+    return inserted;
 }
 
 /*** BeginHeader getContactName */
@@ -191,7 +198,7 @@ void getContactPhone(char* phone) {
     CLEAR_BUFFER();
 
     // Wait for input
-    while(!(sock_gets(&socket, phone, 9))) { DELAY100MS(); }
+    while(!(sock_gets(&socket, phone, 10))) { DELAY100MS(); }
 
     CLEAR_SOCKET();
 }
@@ -202,6 +209,7 @@ int validateContactPhone(char *phone);
 
 int validateContactPhone(char *phone) {
     char aux;
+    int i;
 
     i = 0;
 
@@ -211,7 +219,7 @@ int validateContactPhone(char *phone) {
     for (i = 0; i < 8; i++) {
 
         // Check if is a digit
-        if (!isDigit(*(phone+i))) {
+        if (!isdigit(*(phone+i))) {
             return 0;
         }
     }
@@ -276,7 +284,7 @@ int deleteContact(int option) {
         // When found it, set the array_position to -1, so it is deleted or "invisible"
         if (i == option & contacts[i].array_postion != -1) {
             contacts[i].array_postion = -1;
-            contacts_actived -= 1;
+            contacts_actived--;
             deleted = 1;
 
             writeUserBlock(addr, &contacts[i], 22);

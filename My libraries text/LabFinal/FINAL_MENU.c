@@ -13,7 +13,7 @@ void menuUI();
 /*** EndHeader */
 
 void menuUI() {
-    printEthernet("Menu: \n\n1 - Ver contactos \n\n2 - Agregar contacto \n\n3 - Eliminar contacto \n\nSeleccione una opcion: ");
+    printEthernet("Menu: \n\n1 - Ver contactos \n\n2 - Agregar contacto \n\n3 - Eliminar contacto \n\n4 - Ubicacion del vehiculo\n\nSeleccione una opcion: ");
 }
 
 /*** BeginHeader optionSelected */
@@ -34,19 +34,19 @@ void optionSelected() {
 
     switch (option) {
         case 1:
-            setState(MENU);
-            break;
-            
-        case 2:
             setState(LIST_CONTACTS);
             break;
 
-        case 3:
+        case 2:
             setState(ADD_CONTACT);
             break;
 
-        case 4:
+        case 3:
             setState(DELETE_CONTACT);
+            break;
+
+        case 4:
+            setState(LOCATION);
             break;
 
         default:
@@ -140,13 +140,13 @@ void selectOption(int state) {
 
         case LIST_CONTACTS:
             clearScreenEthernet();
+            DELAY100MS();
             printAgendaEthernet();
-
             setState(INITIAL);
             break;
 
         case ADD_CONTACT:
-            createEventUi();
+            addContact();
             setState(INITIAL);
             break;
 
@@ -163,6 +163,9 @@ void selectOption(int state) {
             clearScreenEthernet();
 
             setState(INITIAL);
+            break;
+
+        case LOCATION:
 
             break;
     }

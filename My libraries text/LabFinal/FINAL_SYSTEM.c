@@ -12,6 +12,7 @@ enum STATE {
     LIST_CONTACTS = 2,
     ADD_CONTACT = 3,
     DELETE_CONTACT = 4,
+    LOCATION = 5,
 };
 
 int current_state;
