@@ -4,20 +4,23 @@
 
 #define GPRS_PWKEY                      4
 #define GPRS_STATUS                     1
-#define MESSAGE_ACCIDENT                "CHOCO EL VEHICULO"
+#define MESSAGE_ACCIDENT                "CHOCO EL VEHICULO EN LA SIGUIENTE DIRECCION"
 
 /*** EndHeader */
 
 /*** BeginHeader modemReady */
-int modemReady();
+void modemReady();
 /*** EndHeader */
 
-int modemReady() {
+void modemReady() {
     int limit_time;
 
     limit_time = 0;
 
+    printf("\n Modem:\n");
+
     while(limit_time < 3) {
+        printf("\tIntento: %d\n", limit_time);
         DELAY100MS();
 
         BitWrPortI(PEDDR, &PEDDRShadow, PORT_OUTPUT, 4);
@@ -33,15 +36,15 @@ int modemReady() {
 
         
         //if (!BitRdPortI(PORT_E, GPRS_STATUS)) {
-        if (!getInput(PORT_E, GPRS_STATUS)) {
-            printf("Se prendio el modem");
-            return 1;
+        if (getInput(PORT_E, GPRS_STATUS)) {
+            printf("\tSe prendio el modem\n");
+            return;
         }
 
         limit_time++;
+        printf("\tNo se prendio el modem\n");
     }
-
-    printf("No se prendio el modem");
+    
 }
 
 /*** BeginHeader synchronizeRabbit */
@@ -49,55 +52,65 @@ int synchronizeRabbit();
 /*** EndHeader */
 
 int synchronizeRabbit() {
-    char response[2];
+    char response[8];
 
     serDputc('A');
     DELAY_S_MS(5, 0);
-    serDputs("AT");
+    serDputs("AT\r");
     
     // Wait for the response
-    while(!serDread(response, 2, 500));
+    while(!serDread(response, 8, 500));
 
     // Check if response is OK
-    if (response[0] == 'O' & response[1] == 'K') {
-        printf("\nSe sincronizo el rabbit");
+    if (strstr(response, "OK") != NULL) {
+        printf("\tSe sincronizo el Rabbit\n\n");
         return 1;
     }
-    printf("\nNo se sincronizo el rabbit");
+    printf("\tSincronizando el Rabbit\n");
     return 0;
 }
 
-/*** BeginHeader sendMessage */
-void sendMessage(char *message);
+/*** BeginHeader configCops */
+void configCops();
 /*** EndHeader */
 
-void sendMessage(char *message) {
-    serDputs(message);
-    serDputc('\n');
+void configCops() {
+    // Antel
+    printf("Operadora:\n");
+    serDputs("AT+COPS=1,2,\"74801\"\n");
+    printf("\tConfigurando oeradora\n");
+}
+
+/*** BeginHeader sendMessage */
+void sendMessage();
+/*** EndHeader */
+
+void sendMessage() {
+    char phone[10];
+    char msg[16];
+    char result[30];
+
+    // Get message info
+    askPhone(phone);
+    askMsg(msg);
+
+    // Send message info
+    send(phone, msg, result);
 }
 
 /*** BeginHeader readMessage */
-void readMessage(char *result, int lenght);
+int readMessage(char *result);
 /*** EndHeader */
 
-void readMessage(char *result) {
-    serDread(result, lenght, );
+int readMessage(char *result) {
+    return serDread(result, 250, 500);
 }
 
 /*** BeginHeader send */
 void send();
 /*** EndHeader */
 
-void send() {
-    char name[11];
-    char phone[9];
-    char msg[15];
-    char result[50];
-
-    askName(name);
-    askPhone(phone);
-    askMsg(msg);
-
+void send(char *phone, char *msg, char *result) {
     sprintf(result, "AT+CMGS=\"");
     strcat(result, phone);
     strcat(result, "\"");
@@ -110,13 +123,41 @@ void send() {
     serDputc(0x1A);
 }
 
-/*** BeginHeader sendAllContacts */
-void sendAllContacts();
+/*** BeginHeader askPhone */
+void askPhone(char *phone);
 /*** EndHeader */
 
-void sendAllContacts() {
+void askPhone(char *phone) {
+    printEthernet("\nPor favor ingrese un numero de destino (9 digitos): ");
+    CLEAR_BUFFER();
+
+    // Wait for input
+    while(!sock_gets(&socket, phone, 11)) { DELAY100MS(); }
+    
+    CLEAR_SOCKET();
+}
+
+/*** BeginHeader askMsg */
+void askMsg(char *msg);
+/*** EndHeader */
+
+void askMsg(char *msg) {
+    printEthernet("\nPor favor ingrese su mensaje (maximo 15 caracteres): ");
+    CLEAR_BUFFER();
+
+    // Wait for input
+    while(!sock_gets(&socket, msg, 11)) { DELAY100MS(); }
+    
+    CLEAR_SOCKET();
+}
+
+/*** BeginHeader alertAllContacts */
+void alertAllContacts(char *link);
+/*** EndHeader */
+
+void alertAllContacts(char *link) {
     int i;
-    char result[50];
+    char result[50], msg[95];
 
     for (i=0; i<5; i++) {
         if (contacts[i].array_postion != -1) {
@@ -128,7 +169,9 @@ void sendAllContacts() {
 
             serDputc(0x0D);
 
-            serDputs(MESSAGE_ACCIDENT);
+            strcat(msg, MESSAGE_ACCIDENT);
+            strcat(msg, link);
+            serDputs(msg);
 
             serDputc(0x1A);
         }

@@ -32,6 +32,7 @@ void initSocket();
 
 void initSocket() {
 
+    printf("initSocket\n");
     tcp_listen(&socket,PORT,0,0,NULL,0);
     while(!sock_established(&socket) && (sock_bytesready(&socket)==-1))
     {
