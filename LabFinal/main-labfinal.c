@@ -126,7 +126,7 @@ void  configTask (void *data) {
             printf("\n Rabbit:\n");
             while(!synchronizeRabbit()) { DELAY100MS(); }
             configCops();
-            printf("\nListo! Puede comenzar a usar el programa\n");
+            printf("\nListo! Puede comenzar a usar el programa\n\n");
             enter = 0;
             OSTaskCreate(tickTask, NULL, 2048, TASK_2_PRIO);
             OSTaskCreate(ethernetTask, NULL, 2048, TASK_3_PRIO);
@@ -184,9 +184,30 @@ void  ethernetTask (void *data) {
 
 void  checkSpeedTask (void *data) {
     char link[46];
+    int carSpeed;
 
     while(1) {
-        if (checkSpeed()) {
+        carSpeed = getAnalogInput(0);
+        if(carSpeed > 3050) {                               // Crash
+            //generateLinkPosition(link);
+            setOutput(PORT_E, RED_LED, 1);
+            // alertar a todos los contactos
+            //alertAllContacts(link);
+        } else if (carSpeed > 2500) {                       // Danger
+            setOutput(PORT_E, RED_LED, 1);
+            OSTimeDlyHMSM(0, 0, 0, 200);
+            setOutput(PORT_E, RED_LED, 0);
+        } else if (carSpeed > 1500) {                       // Warning
+            setOutput(PORT_E, RED_LED, 1);
+            OSTimeDlyHMSM(0, 0, 0, 300);
+            setOutput(PORT_E, RED_LED, 0);
+            OSTimeDlyHMSM(0, 0, 0, 300);
+        } else {
+            setOutput(PORT_E, RED_LED, 0);                  // Nothing
+        }
+
+
+        /*if (checkSpeed()) {
             //generateLinkPosition(link);
             setOutput(PORT_E, RED_LED, 1);
             printf("Choque");
@@ -194,9 +215,9 @@ void  checkSpeedTask (void *data) {
             //alertAllContacts(link);
         } else {
             setOutput(PORT_E, RED_LED, 0);
-        }
+        }*/
 
-        OSTimeDlyHMSM(0, 0, 0, 100);
+        OSTimeDlyHMSM(0, 0, 0, 50);
     }
 }
 
