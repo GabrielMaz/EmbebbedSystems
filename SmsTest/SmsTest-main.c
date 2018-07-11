@@ -11,6 +11,8 @@ enum bitNumber {
 
 #define PORT_INPUT 0
 #define PORT_OUTPUT 1
+#define DINBUFSIZE              255
+#define DOUTBUFSIZE             255
 
 char* getPortShadow(enum portName p_port) {
     switch(p_port){
@@ -47,7 +49,7 @@ void configurePorts(){
 	BitWrPortI(PEDDR, &PEDDRShadow, PORT_INPUT, 4);
     
 	// serial port C
-	serCopen(9600);
+	//serCopen(9600);
 
 	// serial port D
 	serDopen(9600);
@@ -121,43 +123,45 @@ int synchronizeRabbit() {
     return 0;
 }
 
-void send(char * data) {
-    char response[44];
-    int i;
-    serDputs("AT+CMGS=\"094560289\"");
+void send(char * data, char * cel) {
+    char result[30], response[35];
+    int i, index;
 
-    while(!serDread(response, 20, 500));
+    index = 0;
 
-    for (i=0; i<44; i++) {
-        printf("%d - %c\n", i, response[i]);
-    }
+    sprintf(result, "AT+CMGS=\"");
+    strcat(result, cel);
+    strcat(result, "\"");
+    serDputs(result);
 
     serDputc(0x0D);
+
+    while(!serDread(response, 20, 500));
 
     serDputs(data);
 
     serDputc(0x1A);
 
-    while(!serDread(response, 44, 500));
-
-    for (i=0; i<17; i++) {
-        printf("%d - %c\n", i, response[i]);
-    }
+    while(!serDread(response, 35, 500));
 }
 
-void read(char *data) {
-    char response[50];
+void read() {
+    char response[256];
     int i;
-    serDputs("AT+CMGL=0");
     
-    while(!serDread(response, 50, 500));
-    for (i=0; i<50; i++) {
-        printf("%d - %c \n", i, response[i]);
-    }
+    serDputs("AT+CMGL=\"REC UNREAD\"\r");
+    //serDputs("AT+CMGDA=\"DEL ALL\"\r");
+    serDrdFlush();
+    memset(response,0,256);
+    while(!serDread(response, 256, 500));
+    
+    printf(response);
+
+    printf("\n\n");
 }
 
 void main (void) {
-    char data[20];
+    char data[20], cel[10];
     configurePorts();
     modemReady();
     while(!synchronizeRabbit()) { delay(100); }
@@ -165,7 +169,10 @@ void main (void) {
     while (1) {
         printf("Mensaje: ");
         while(!getswf(data));
-        //send(data);
-        read(data);
+        //printf("Cel: ");
+        //while(!getswf(cel));
+        //send(data, cel);
+        read();
+        delay(100);
     }
 }
