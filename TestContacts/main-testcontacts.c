@@ -1,4 +1,4 @@
-#define MAX_NUMBER_CONTACTS     2
+#define MAX_NUMBER_CONTACTS     5
 #define BLOCK_SIZE              23      // array_position 2 bytes, name 11 bytes, phone 10 bytes = 23 bytes
 
 typedef struct Contact {
@@ -130,9 +130,9 @@ void printAgenda() {
         for (i = 0; i < MAX_NUMBER_CONTACTS; i++){
             readUserBlock(contact_pointer, addr, BLOCK_SIZE);
             if (contact.array_position != -1) {
-                printf("\n\n Posicion: %d\n Nombre: %s\n Celular: %s", 
+                printf("-------- %d --------\n", i+1);
+                printf("\n\n Posicion: %d\n Nombre: %s\n Celular: %s\n\n", 
                 (*contact_pointer).array_position, (*contact_pointer).name, (*contact_pointer).phone);
-                printf("\n\n");
             }
             addr += BLOCK_SIZE;
         }      
@@ -220,23 +220,44 @@ void deleteContact(int position) {
     contact_pointer = &contact;
 
     // Initial position to userBlock
-    addr = 0;    
+    addr = BLOCK_SIZE * position;    
 
     if (contacts_actived == 0) {
         printf("No hay contactos para eliminar\n\n");
-
+        return;
     } else {
-        printf("Listado de contactos:\n\n");
 
-        for (i = 0; i < MAX_NUMBER_CONTACTS; i++){
-            readUserBlock(contact_pointer, addr, BLOCK_SIZE);
-            if (contact.array_position != -1) {
-                printf("\n\n Posicion: %d\n Nombre: %s\n Celular: %s", 
-                (*contact_pointer).array_position, (*contact_pointer).name, (*contact_pointer).phone);
-                printf("\n\n");
-            }
-            addr += BLOCK_SIZE;
-        }      
+        // Get the contact
+        readUserBlock(contact_pointer, addr, BLOCK_SIZE);
+        // Check if it is activated
+        if (contact.array_position != -1) {
+            // Set it deleted
+            contact.array_position = -1;
+            // Decrease the number of contacts in agenda
+            contacts_actived --;
+            // Update the block
+            writeUserBlock(addr, contact_pointer, BLOCK_SIZE);
+            printf("\nSe ha eliminado correctamente a %s\n", contact.name);    
+        } else {
+            printf("\nIngrese una opcion valida\n");
+        }
+    }
+}
+
+void deleteUserOption() {
+    char data[2];
+    int option;
+
+    printAgenda();
+    printf("\nPor favor ingrese el contacto a eliminar: ");
+    while(!getswf(data));
+
+    option = converter(data);
+
+    if(option > 0 & option <= MAX_NUMBER_CONTACTS) {
+        deleteContact(option - 1);
+    } else {
+        printf("\nIngrese una opcion valida\n");
     }
 }
 
@@ -265,7 +286,7 @@ void main (void) {
                 break;
             
             case 3:
-
+                deleteUserOption();
                 break;
 
             
