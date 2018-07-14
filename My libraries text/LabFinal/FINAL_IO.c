@@ -2,13 +2,19 @@
 
 #define PORT_INPUT 0
 #define PORT_OUTPUT 1
+#define BUTTON_IS_PRESSED(BUTTON) (getButtonValue(BUTTON) == 0)
+#define TURN_ON_LED(PIN) (setOutput(PORT_A, PIN, 1))
+#define TURN_OFF_LED(PIN) (setOutput(PORT_A, PIN, 0))
 
 enum portName {
     PORT_A = PADR,
-    PORT_E = PEDR
+    PORT_B = PBDR,
+    PORT_E = PEDR,
+    PORT_F = PFDR
 };
 
 enum bitNumber {
+	bit_0 = 0,
     GPRS_STATUS = 1,
 	GPRS_PWKEY = 4,
 	RED_LED = 5
@@ -127,4 +133,55 @@ int IO_getAnalogInput( unsigned char p_input )
 	retVal += UT_ASCIItoCharNum(datos[p_input * 3 + 5]);
 
 	return retVal;
+}
+
+/*** BeginHeader getButtonValue */
+int getButtonValue(int button);
+/*** EndHeader */
+
+int getButtonValue(int button) {
+    int port;
+    int pin;
+
+    if (button < 4){
+        port = PORT_B;
+        pin = button + 2;
+    } else {
+        port = PORT_F;
+        pin = button;
+    }
+
+    return getInput(port, pin);
+}
+
+/*** BeginHeader */
+enum bitNumber getPin(int button);
+/*** EndHeader */
+
+enum bitNumber getPin(int button) {
+    switch(button) {
+        case 0:
+            return PIN_0;
+
+        case 1:
+            return PIN_1;
+
+        case 2:
+            return PIN_2;
+
+        case 3:
+            return PIN_3;
+
+        case 4:
+            return PIN_4;
+
+        case 5:
+            return PIN_5;
+
+        case 6:
+            return PIN_6;
+
+        case 7:
+            return PIN_7;
+    }
 }

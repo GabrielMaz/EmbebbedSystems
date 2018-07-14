@@ -125,7 +125,7 @@ void printAgenda() {
         printf("No hay contactos agendados\n\n");
 
     } else {
-        printf("Listado de contactos:\n\n");
+        printf("Lista de contactos:\n\n");
 
         for (i = 0; i < MAX_NUMBER_CONTACTS; i++){
             readUserBlock(contact_pointer, addr, BLOCK_SIZE);
@@ -178,6 +178,8 @@ void addContact() {
     int result;
 
     contact_pointer = &contact;
+    name_pointer = (*contact_pointer).name;
+    phone_pointer = (*contact_pointer).phone;
 
     // Check if the agenda is full of contacts
     if (contacts_actived == MAX_NUMBER_CONTACTS) {
@@ -220,7 +222,7 @@ void deleteContact(int position) {
     contact_pointer = &contact;
 
     // Initial position to userBlock
-    addr = BLOCK_SIZE * position;    
+    addr = BLOCK_SIZE * position;
 
     if (contacts_actived == 0) {
         printf("No hay contactos para eliminar\n\n");

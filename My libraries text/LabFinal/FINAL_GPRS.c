@@ -4,7 +4,7 @@
 
 #define GPRS_PWKEY                      4
 #define GPRS_STATUS                     1
-#define MESSAGE_ACCIDENT                "CHOCO EL VEHICULO EN LA SIGUIENTE DIRECCION"
+#define MESSAGE_ACCIDENT                "CHOCO EL VEHICULO EN LA SIGUIENTE DIRECCION "
 
 /*** EndHeader */
 
@@ -19,32 +19,36 @@ void modemReady() {
 
     printf("\n Modem:\n");
 
-    while(limit_time < 3) {
-        printf("\tIntento: %d\n", limit_time);
-        DELAY100MS();
+    if (getInput(PORT_E, GPRS_STATUS)) { 
+            printf("\tSe prendio el modem\n"); 
+            return; 
+    } else { 
 
-        BitWrPortI(PEDDR, &PEDDRShadow, PORT_OUTPUT, 4);
-        setOutput(PORT_E, GPRS_PWKEY, 0);
+        while(limit_time < 3) {
+            printf("\tIntento: %d\n", limit_time);
+            DELAY100MS();
 
-        // delay > 1 s
-        DELAY_S_MS(1, 100);
+            BitWrPortI(PEDDR, &PEDDRShadow, PORT_OUTPUT, 4);
+            setOutput(PORT_E, GPRS_PWKEY, 0);
 
-        BitWrPortI(PEDDR, &PEDDRShadow, PORT_INPUT, 4);
+            // delay > 1 s
+            DELAY_S_MS(1, 100);
 
-        // delay > 2 s
-        DELAY_S_MS(2, 100);
+            BitWrPortI(PEDDR, &PEDDRShadow, PORT_INPUT, 4);
 
-        
-        //if (!BitRdPortI(PORT_E, GPRS_STATUS)) {
-        if (getInput(PORT_E, GPRS_STATUS)) {
-            printf("\tSe prendio el modem\n");
-            return;
+            // delay > 2 s
+            DELAY_S_MS(2, 100);
+
+            
+            if (getInput(PORT_E, GPRS_STATUS)) {
+                printf("\tSe prendio el modem\n");
+                return;
+            }
+
+            limit_time++;
+            printf("\tNo se prendio el modem\n");
         }
-
-        limit_time++;
-        printf("\tNo se prendio el modem\n");
-    }
-    
+    }    
 }
 
 /*** BeginHeader synchronizeRabbit */
@@ -63,54 +67,35 @@ int synchronizeRabbit() {
 
     // Check if response is OK
     if (strstr(response, "OK") != NULL) {
-        printf("\tSe sincronizo el Rabbit\n\n");
+        printf("\tSe sincronizo\n\n");
         return 1;
     }
-    printf("\tSincronizando el Rabbit\n");
+    printf("\tSincronizando...\n");
     return 0;
 }
 
-/*** BeginHeader configCops */
-void configCops();
+/*** BeginHeader checkNewMessage */
+int checkNewMessage();
 /*** EndHeader */
 
-void configCops() {
-    // Antel
-    printf("Operadora:\n");
-    serDputs("AT+COPS=1,2,\"74801\"\n");
-    printf("\tConfigurando oeradora\n");
-}
-
-/*** BeginHeader sendMessage */
-void sendMessage();
-/*** EndHeader */
-
-void sendMessage() {
-    char phone[10];
-    char msg[16];
-    char result[30];
-
-    // Get message info
-    askPhone(phone);
-    askMsg(msg);
-
-    // Send message info
-    send(phone, msg, result);
-}
-
-/*** BeginHeader readMessage */
-int readMessage(char *result);
-/*** EndHeader */
-
-int readMessage(char *result) {
-    return serDread(result, 250, 500);
+int checkNewMessage() {
+    char response[256];
+    int i;
+    
+    serDputs("AT+CMGL=\"REC UNREAD\"\r");
+    
+    memset(response,0,256);
+    while(!serDread(response, 256, 500));
+    return (strstr(response, "+CMGL:") != NULL);
 }
 
 /*** BeginHeader send */
-void send();
+void send(char *phone, char *msg);
 /*** EndHeader */
 
-void send(char *phone, char *msg, char *result) {
+void send(char *phone, char *msg) {
+    char result[20];                        // AT+CMGS=\"094560289\" = 19 char + end of string
+
     sprintf(result, "AT+CMGS=\"");
     strcat(result, phone);
     strcat(result, "\"");

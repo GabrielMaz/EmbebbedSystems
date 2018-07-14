@@ -13,6 +13,7 @@ enum STATE {
     ADD_CONTACT = 3,
     DELETE_CONTACT = 4,
     LOCATION = 5,
+    DATA_SAVED = 6
 };
 
 int current_state;
@@ -25,10 +26,6 @@ void initSystem();
 
 void initSystem() {
     configurePorts();
-    printf(" Socket:\n\tIniciando Socket\n");
-	sock_init();
-	printf("\tIniciado\n");
-    initAgenda();
     setState(INITIAL);
     events_actived = 0;
 }

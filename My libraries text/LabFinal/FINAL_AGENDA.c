@@ -1,15 +1,17 @@
 /*** BeginHeader */
 
-#define MAX_NUMBER_CONTACTS 7
+#define MAX_NUMBER_CONTACTS     7
+#define BLOCK_SIZE              23      // array_position 2 bytes, name 11 bytes, phone 10 bytes = 23 bytes
 
 typedef struct Contact {
-    int array_postion;
+    int array_position;
     char name[11];
-    char phone[9];
+    char phone[10];
 };
 
 struct Contact contacts[MAX_NUMBER_CONTACTS];
 int contacts_actived;
+int position;
 
 /*** EndHeader */
 
@@ -19,36 +21,59 @@ void initAgenda();
 
 void initAgenda() {
     int i;
-    struct Contact contact;
+    struct Contact contact, *contact_pointer;
+    unsigned int addr;
 
     contacts_actived = 0;
 
-    for (i = 0; i < MAX_NUMBER_CONTACTS; i++){
-        contact.array_postion = -1;
-        contacts[i] = contact;
-    }
-}
+    contact_pointer = &contact;
 
+    // Initial position to userBlock
+    addr = 0;
+
+    printf("\nAgenda:\n\tIniciando agenda de contactos");
+
+    // All contacts by default starts with position -1, its means than there aren't contacts in the agenda
+    contact.array_position = -1;
+
+    for (i = 0; i < MAX_NUMBER_CONTACTS; i++) {
+        printf(".");
+        writeUserBlock(addr, contact_pointer, BLOCK_SIZE);
+        addr += BLOCK_SIZE;
+
+        OSTimeDlyHMSM(0,0,0,100);
+    }
+
+    printf("\n\nListo! Puede comenzar a usar el programa\n\n");
+}
 
 /*** BeginHeader printAgendaEthernet */
 void printAgendaEthernet();
 /*** EndHeader */
 
 void printAgendaEthernet() {
-    struct Contact contact;
-    int i;
+    struct Contact contact, *contact_pointer;
     char result[80];
+    int i;
+    unsigned int addr;
+
+    contact_pointer = &contact;
+
+    // Initial position to userBlock
+    addr = 0;
 
     if (contacts_actived == 0) {
-        printEthernet("No hay contactos agendados\n\n");
+        printEthernet("No hay contactos agendados");
 
     } else {
-        printEthernet("Listado de contactos:\n\n");
+        printEthernet("Lista de contactos:\n\n");
 
         for (i = 0; i < MAX_NUMBER_CONTACTS; i++){
-            contact = contacts[i];
+            // Get the contact
+            readUserBlock(contact_pointer, addr, BLOCK_SIZE);
 
-            if (contact.array_postion != -1) {
+            // If not empty, print the info
+            if (contact.array_position != -1) {
                 sprintf(result, "-------- %d --------\n\nNombre: ", i+1);
                 printNameEthernet(contact.name, result);
                 strcat(result, "\n\nCelular:");
@@ -56,8 +81,12 @@ void printAgendaEthernet() {
                 strcat(result, "\n");
                 printEthernet(result);
             }
+            // Increase addr to find the next block
+            addr += BLOCK_SIZE;
         }        
     }
+
+    clearScreenEthernet();
 }
 
 /*** BeginHeader printNameEthernet */
@@ -87,10 +116,10 @@ void printPhoneEthernet(char data[], char resultEthernet[]);
 
 void printPhoneEthernet(char data[], char resultEthernet[]) {
     int i;
-    char result[9];
+    char result[10];
 
     
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < 9; i++) {
         result[i] = data[i];
     }
 
@@ -104,6 +133,7 @@ void addContact();
 void addContact() {
     struct Contact contact, *contact_pointer;
     char *name_pointer, *phone_pointer;
+    int result;
 
     contact_pointer = &contact;
     name_pointer = (*contact_pointer).name;
@@ -121,56 +151,60 @@ void addContact() {
         // Ask for a phone
         getContactPhone(phone_pointer);
 
+        clearScreenEthernet();
+
         // Check if entered value belongs to the possible values
         if (!validateContactPhone(phone_pointer)) {
+            printEthernet("Por favor ingrese un celular valido");
             clearScreenEthernet();
-            printEthernet("Por favor ingrese un dato valido");
-            
             return;
         }
 
         if(!insertContact(contact_pointer)) {
             printEthernet("No se pudo agregar el contacto");
+            clearScreenEthernet();
             return;
         }
 
-        clearScreenEthernet();
         printEthernet("Su contacto fue agregado a la agenda de contactos");
         clearScreenEthernet();
     }
 }
 
 /*** BeginHeader insertContact */
-int insertContact(struct Contact *contact);
+int insertContact(struct Contact *newContact);
 /*** EndHeader */
 
-int insertContact(struct Contact *contact) {
+int insertContact(struct Contact *newContact) {
+    struct Contact contact, *contact_pointer;
     int i, inserted;
-    unsigned int addr, blockSize;
+    unsigned int addr;
 
     inserted = 0;
+
+    contact_pointer = &contact;
 
     // Initial position to userBlock
     addr = 0;
 
-    // Size of each block
-    // array_position 2 bytes, name 11 bytes, phone 9 bytes
-    blockSize = 22;
-
     // Looking for an empty position
     for (i = 0; i < MAX_NUMBER_CONTACTS; i++) {
-        if (contacts[i].array_postion == -1) {
-            (*contact).array_postion = i;
-            contacts[i] = (*contact);
-            contacts_actived++;
+        // Get the contact
+        readUserBlock(contact_pointer, addr, BLOCK_SIZE);
+
+        // If the contact is empty, save the data
+        if(contact.array_position == -1) {
+            (*newContact).array_position = i;
+            contacts_actived ++;
             inserted = 1;
-            writeUserBlock(addr, &contacts[i], blockSize);
-            break;
+
+            writeUserBlock(addr, newContact, BLOCK_SIZE);
+            return inserted;
         }
 
-        addr += blockSize;
+        // Increase addr to find the next block
+        addr += BLOCK_SIZE;
     }
-
     return inserted;
 }
 
@@ -179,13 +213,15 @@ void getContactName(char *name);
 /*** EndHeader */
 
 void getContactName(char *name) {
-    printEthernet("\nPor favor ingrese un nombre para el contacto (maximo 10 caracteres): ");
+    printEthernet("\n\nPor favor ingrese un nombre para el contacto (maximo 10 caracteres): ");
     CLEAR_BUFFER();
 
     // Wait for input
     while(!sock_gets(&socket, name, 11)) { DELAY100MS(); }
     
     CLEAR_SOCKET();
+
+    OSTimeDlyHMSM(0, 0, 0, 100);
 }
 
 /*** BeginHeader getContactPhone */
@@ -194,13 +230,15 @@ void getContactPhone(char* phone);
 
 void getContactPhone(char* phone) {
 
-    printEthernet("\nPor favor ingrese un celular: ");
+    printEthernet("\n\nPor favor ingrese un celular: ");
     CLEAR_BUFFER();
 
     // Wait for input
     while(!(sock_gets(&socket, phone, 10))) { DELAY100MS(); }
 
     CLEAR_SOCKET();
+
+    OSTimeDlyHMSM(0, 0, 0, 100);
 }
 
 /*** BeginHeader validateContactPhone */
@@ -240,59 +278,57 @@ void deleteContactEthernet() {
 
     // Wait for input
     while(!sock_gets(&socket, data, 4)) { DELAY100MS(); }
+
+    // Convert the input to int
     option = converter(data) - 1;
 
     CLEAR_SOCKET();
 
-    // Check if option is not between 0 and 5 
+    clearScreenEthernet();
+
+    // Check if option is between 0 and 5 
     if (option < 0 | option > MAX_NUMBER_CONTACTS) {
-        clearScreenEthernet();
         printEthernet("Por favor ingrese un dato valido ");
         return;
     }
 
-    // Check if the contact could be deleted
-    if (deleteContact(option)) {
-        clearScreenEthernet();
-        printEthernet("El contacto fue eliminado correctamente");
-
-    } else {
-        clearScreenEthernet();
-        printEthernet("No existe un contacto con ese numero");
-    }    
+    deleteContact(option);    
 }
 
 /*** BeginHeader deleteContact */
-int deleteContact(int option);
+void deleteContact(int option);
 /*** EndHeader */
 
-int deleteContact(int option) {
-    int i, deleted, addr, blockSize;
+void  deleteContact(int position) {
+    struct Contact contact, *contact_pointer;
+    int i;
+    unsigned int addr;
+    char msg[45];
+
+    contact_pointer = &contact;
 
     // Initial position to userBlock
-    addr = 0;
+    addr = BLOCK_SIZE * position;
 
-    // Size of each block
-    // array_position 2 bytes, name 11 bytes, phone 9 bytes
-    blockSize = 22;
-
-    deleted = 0;
-
-    // Search the contact to delete
-    for (i = 0; i < MAX_NUMBER_CONTACTS; i++) {
-
-        // When found it, set the array_position to -1, so it is deleted or "invisible"
-        if (i == option & contacts[i].array_postion != -1) {
-            contacts[i].array_postion = -1;
-            contacts_actived--;
-            deleted = 1;
-
-            writeUserBlock(addr, &contacts[i], 22);
-            break;
-        }
-
-        addr += blockSize;
+    if (contacts_actived == 0) {
+        printEthernet("No hay contactos para eliminar");
+        return;
     }
 
-    return deleted;
+    // Get the contact
+    readUserBlock(contact_pointer, addr, BLOCK_SIZE);
+    // Check if it is activated
+    if (contact.array_position != -1) {
+        // Set it deleted
+        contact.array_position = -1;
+        // Decrease the number of contacts in agenda
+        contacts_actived --;
+        // Update the block
+        writeUserBlock(addr, contact_pointer, BLOCK_SIZE);
+        sprintf(msg, "\nSe ha eliminado correctamente a\n");
+        strcat(msg, contact.name);
+        printEthernet(msg);
+    } else {
+        printEthernet("\nIngrese una opcion valida\n");
+    }
 }
