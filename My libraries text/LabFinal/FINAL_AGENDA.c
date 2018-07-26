@@ -1,6 +1,6 @@
 /*** BeginHeader */
 
-#define MAX_NUMBER_CONTACTS     7
+#define MAX_NUMBER_CONTACTS     5
 #define BLOCK_SIZE              23      // array_position 2 bytes, name 11 bytes, phone 10 bytes = 23 bytes
 
 typedef struct Contact {
@@ -31,7 +31,7 @@ void initAgenda() {
     // Initial position to userBlock
     addr = 0;
 
-    printf("\nAgenda:\n\tIniciando agenda de contactos");
+    printf("\n Agenda:\n\tIniciando agenda de contactos");
 
     // All contacts by default starts with position -1, its means than there aren't contacts in the agenda
     contact.array_position = -1;
@@ -331,4 +331,58 @@ void  deleteContact(int position) {
     } else {
         printEthernet("\nIngrese una opcion valida\n");
     }
+}
+
+/*** BeginHeader friendlyPhone */
+int friendlyPhone(char *phone);
+/*** EndHeader */
+
+int friendlyPhone(char *phone) {
+    struct Contact contact, *contact_pointer;
+    char result[80];
+    int i, isFriend;
+    unsigned int addr;
+
+    contact_pointer = &contact;
+
+    // Initial position to userBlock
+    addr = 0;
+
+    isFriend = 0;
+
+    for (i = 0; i < MAX_NUMBER_CONTACTS; i++){
+        // Get the contact
+        readUserBlock(contact_pointer, addr, BLOCK_SIZE);
+
+        // If not empty, print the info
+        if (contact.array_position != -1) {
+            // Check if the number is in agenda
+            if (equalsPhones(contact.phone, phone)) {
+                isFriend = 1;
+            }
+        }
+        // Increase addr to find the next block
+        addr += BLOCK_SIZE;
+    }
+    
+    return isFriend;
+}
+
+/*** BeginHeader equalsPhones */
+int equalsPhones(char *phone1, char *phone2);
+/*** EndHeader */
+
+int equalsPhones(char *phone1, char *phone2) {
+    int i, result;
+
+    result = 1;
+
+    for (i = 0; i < 9; i++) {
+        if ((*phone1+i) != (*phone2+i)) {
+            result = 0;
+            break;
+        }
+    }
+
+    return result;
 }

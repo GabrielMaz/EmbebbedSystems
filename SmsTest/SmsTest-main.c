@@ -136,6 +136,10 @@ void send(char *phone, char *msg) {
     printf(result);
     serDputs(result);
 
+    printf("\n-");
+    printf(result);
+    printf("-\n");
+
     serDputc(0x0D);
 
     while(!serDread(response, 20, 500));

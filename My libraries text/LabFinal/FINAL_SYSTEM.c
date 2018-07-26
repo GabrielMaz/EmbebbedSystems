@@ -11,9 +11,7 @@ enum STATE {
     MENU = 1,
     LIST_CONTACTS = 2,
     ADD_CONTACT = 3,
-    DELETE_CONTACT = 4,
-    LOCATION = 5,
-    DATA_SAVED = 6
+    DELETE_CONTACT = 4
 };
 
 int current_state;
@@ -26,6 +24,7 @@ void initSystem();
 
 void initSystem() {
     configurePorts();
+    initCircularBuffer();
     setState(INITIAL);
     events_actived = 0;
 }
@@ -44,17 +43,4 @@ enum STATE getState();
 
 enum STATE getState() {
     return current_state;
-}
-
-/*** BeginHeader delayMS */
-void delayMS(int ms_delay);
-/*** EndHeader */
-
-void delayMS(int ms_delay) {
-    auto unsigned long t0;
-
-    // ms timer is updated by rabbit
-    t0 = MS_TIMER;
-
-    while (MS_TIMER < (t0 + ms_delay));
 }

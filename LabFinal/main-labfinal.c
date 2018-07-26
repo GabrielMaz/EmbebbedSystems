@@ -2,23 +2,21 @@
 
 This program does the following:
 
-Start up task:      Creates 5 tasks.
+Start up task:          Creates 5 tasks.
 configTask              Check if the modem is on
-void creatorTask        Synchronize Rabbit with SIM900
 tickTask:			    Excecute ticks to tcp connection.
 ethernetTask:		    Excecute program by ethernet.
 checkSpeedTask: 	    Check speed.
-updateRTCTask.          Update RTC.
-readMessagesTask         Check for new messages
-showMessagesTask        Print via ethernet that there is a new message
-savePositionTask        Save the position every 2 min 
+readMessagesTask        Save the new messages
+replayMessagesTask      Replay message if it is from a contact and if it contain POSICION VEHICULO
+loggerTask              Save the position every 2 min 
 
 ********************************************************************************************************/
 #class auto 			// Change default storage class for local variables: on the stack*****************************************************************************************************
 
 // Redefine uC/OS-II configuration constants as necessary
-#define OS_MAX_EVENTS           6       // Maximum number of events (semaphores + queues + mailboxes + MAX_TCP_SOCKET_BUFFERS + 2)
-#define OS_MAX_TASKS            6  		// Maximum number of tasks system can create (less stat and idle tasks)
+#define OS_MAX_EVENTS           9      // Maximum number of events (semaphores + queues + mailboxes + MAX_TCP_SOCKET_BUFFERS + 2)
+#define OS_MAX_TASKS            9  	// Maximum number of tasks system can create (less stat and idle tasks)
 
 #define OS_MEM_EN               1
 #define OS_Q_EN                 1       // Queue 
@@ -28,7 +26,7 @@ savePositionTask        Save the position every 2 min
 #define OS_TASK_DEL_EN          1       // Enable OSTaskDel()
 #define OS_TIME_DLY_HMSM_EN	    1		// Enable OSTimeDlyHMSM
 #define STACK_CNT_256	        1       // idle task
-#define STACK_CNT_512	        8       // number of 512 byte stacks (application tasks + stat task + prog stack)
+#define STACK_CNT_512	        11      // number of 512 byte stacks (application tasks + stat task + prog stack)
 #define STACK_CNT_2K         	5		// TCP/IP needs a 2K stack
 #define MAX_TCP_SOCKET_BUFFERS  1		// One sockets for TCPIP connection.
 #define DINBUFSIZE              255
@@ -37,14 +35,12 @@ savePositionTask        Save the position every 2 min
 #use FINAL_SYSTEM.LIB
 #use FINAL_IO.LIB
 #use FINAL_MENU.LIB
-#use FINAL_CLOCK.LIB
-#use FINAL_EVENT.LIB
 #use FINAL_PIC.LIB
 #use FINAL_UCOS.LIB
 #use FINAL_ETHERNET.LIB
-#use FINAL_GPS_Custom.LIB
 #use FINAL_GPRS.LIB
 #use FINAL_AGENDA.LIB
+#use FINAL_CIRCULAR_BUFFER.LIB
 
 /*
 *********************************************************************************************************
@@ -63,7 +59,6 @@ savePositionTask        Save the position every 2 min
 #define          TASK_6_ID           6
 #define          TASK_7_ID           7
 #define          TASK_8_ID           8
-#define          TASK_9_ID           9
 
 #define          TASK_START_PRIO    10                /* Application tasks priorities                  */
 #define          TASK_1_PRIO        11
@@ -74,7 +69,6 @@ savePositionTask        Save the position every 2 min
 #define          TASK_6_PRIO        16
 #define          TASK_7_PRIO        17
 #define          TASK_8_PRIO        18
-#define          TASK_9_PRIO        19
 
 #define          MAX_TIMER           10
 
@@ -85,14 +79,12 @@ savePositionTask        Save the position every 2 min
 */
 
 void configTask(void *data);
-void creatorTask(void *data);
 void tickTask(void *data);
 void ethernetTask(void *data);
 void checkSpeedTask(void *data);
-void updateRTCTask(void *data);
 void readMessagesTask(void *data);
-void showMessagesTask(void *data);
-void savePositionTask(void *data);
+void replayMessagesTask(void *data);
+void loggerTask(void *data);
 void activationTask(void *data);
 
 /* 
@@ -104,7 +96,7 @@ void activationTask(void *data);
 int enter;
 int active;
  
-char mem_partition[10][50];                     // 10 messages, length 50 
+char mem_partition[10][10];                     // 10 messages, length 10 
 OS_MEM* mem_pointer; 
 OS_EVENT* queue_pointer; 
 void* queue[10]; 
@@ -126,14 +118,14 @@ void main (void) {
     OSInit();
     initSystem();
 
-    mem_pointer = OSMemCreate(mem_partition, 10, 50, &err); 
+    mem_pointer = OSMemCreate(mem_partition, 10, 10, &err); 
     queue_pointer = OSQCreate(queue, 10);
 
     // GPS_init utiliza delays del sistema operativo, por lo tanto debe ser una tarea.
     // Una vez que se ejecuta se autodestruye.
-    OSTaskCreate(GPS_init, NULL, 512, TASK_START_PRIO);
+    //OSTaskCreate(GPS_init, NULL, 512, TASK_START_PRIO);
 
-    OSTaskCreate(configTask, NULL, 2048, TASK_1_PRIO);
+    OSTaskCreate(configTask, NULL, 512, TASK_1_PRIO);
 
     OSStart();
 }
@@ -156,10 +148,13 @@ void  configTask (void *data) {
             sock_init();
             printf("\tIniciado\n");
             enter = 0;
-            OSTaskCreate(tickTask, NULL, 2048, TASK_2_PRIO);
-            OSTaskCreate(ethernetTask, NULL, 2048, TASK_3_PRIO);
-            OSTaskCreate(checkSpeedTask, NULL, 2048, TASK_4_PRIO);
-            OSTaskCreate(activationTask, NULL, 2048, TASK_5_PRIO);
+            OSTaskCreate(tickTask, NULL, 512, TASK_2_PRIO);
+            OSTaskCreate(ethernetTask, NULL, 1024, TASK_3_PRIO);
+            OSTaskCreate(checkSpeedTask, NULL, 256, TASK_4_PRIO);
+            OSTaskCreate(activationTask, NULL, 256, TASK_5_PRIO);
+            OSTaskCreate(readMessagesTask, NULL, 2048, TASK_6_PRIO);
+            OSTaskCreate(replayMessagesTask, NULL, 1024, TASK_7_PRIO);
+            OSTaskCreate(loggerTask, NULL, 1024, TASK_8_PRIO);
 
         } else {
             DELAY100MS();
@@ -169,7 +164,7 @@ void  configTask (void *data) {
 
 /*
 *********************************************************************************************************
-*                                               TASK #3
+*                                               TASK #2
 *
 * Description: This task excecute ticks to tcp connection.
 *********************************************************************************************************
@@ -188,7 +183,7 @@ void tickTask (void *data) {
 
 /*
 *********************************************************************************************************
-*                                               TASK #4
+*                                               TASK #3
 *
 * Description: This task excecute program by ethernet.
 *********************************************************************************************************
@@ -196,6 +191,7 @@ void tickTask (void *data) {
 
 void  ethernetTask (void *data) {
     initAgenda();
+    OSTaskCreate(readMessagesTask, NULL, 2048, TASK_6_PRIO);
     while(1) {
         while (active) {
             selectOption(current_state);
@@ -207,10 +203,9 @@ void  ethernetTask (void *data) {
 
 /*
 *********************************************************************************************************
-*                                               TASK #5
+*                                               TASK #4
 *
-* Description: This task check the speed of the vehicle every 10 seconds, if it is over 10g,
-                it sends a sms.
+* Description: This task check the speed of the vehicle.
 *********************************************************************************************************
 */
 
@@ -221,45 +216,42 @@ void  checkSpeedTask (void *data) {
     while(1) {
         carSpeed = getAnalogInput(0);
         if(carSpeed > 3050) {                               // Crash
-            //generateLinkPosition(link);
             setOutput(PORT_E, RED_LED, 1);
-            // alertar a todos los contactos
-            //alertAllContacts(link);
+            alertAllContacts();
+            OSTimeDlyHMSM(0, 0, 30, 100);
+
         } else if (carSpeed > 2500) {                       // Danger
             setOutput(PORT_E, RED_LED, 1);
             OSTimeDlyHMSM(0, 0, 0, 200);
             setOutput(PORT_E, RED_LED, 0);
+
         } else if (carSpeed > 1500) {                       // Warning
             setOutput(PORT_E, RED_LED, 1);
             OSTimeDlyHMSM(0, 0, 0, 300);
             setOutput(PORT_E, RED_LED, 0);
             OSTimeDlyHMSM(0, 0, 0, 300);
+
         } else {
             setOutput(PORT_E, RED_LED, 0);                  // Nothing
         }
 
         OSTimeDlyHMSM(0, 0, 0, 100);
+
     }
 }
 
 /*
 *********************************************************************************************************
-*                                               TASK #7
+*                                               TASK #5
 *
-* Description: Check every 100ms if there are new messages.
+* Description: Check every 100ms if there is a new message, if it is from 
+  a contact and contains POSICION VEHICULO, it must be saved.
 *********************************************************************************************************
 */
 
 void readMessagesTask(void *data) {
-    char* mem_block; 
-    char msg[50]; 
-
     while (1) {
-        if (checkNewMessage() > 0) {
-            mem_block = (char*) OSMemGet(mem_pointer, &err); 
-            strcpy(mem_block, msg); 
-            OSQPost(queue_pointer, mem_block); 
-        }
+        checkNewMessage();
         
         OSTimeDlyHMSM(0, 0, 0, 100);
     }
@@ -267,24 +259,50 @@ void readMessagesTask(void *data) {
 
 /* 
 ********************************************************************************************************* 
-*                                               TASK #7 
+*                                               TASK #6
 * 
-* Description: Check every 100ms if there are new messages. 
+* Description: Read the messages saved and replay them. 
 ********************************************************************************************************* 
 */ 
  
-void showMessagesTask(void *data) { 
-    char* received; 
-    char msg[50]; 
+void replayMessagesTask(void *data) {
+    char *phone_pointer, phone[9];
+    int i;
+
+    phone_pointer = phone;
+
+    while (1) {
+
+        if (phone_pointer = (char*) OSQPend(queue_pointer, 2, &err)) {
+
+            //sendMessage(phone_pointer, LINK);
+            sendMessage(phone_pointer, "LINK");
+
+            OSTimeDlyHMSM(0, 0, 0, 200);
+        }
+    }
+}
+
+/* 
+********************************************************************************************************* 
+*                                               TASK #7
+* 
+* Description: save a log every minute. 
+********************************************************************************************************* 
+*/ 
+ 
+void loggerTask(void *data) {
+    int i;
+    struct Information info;
+
+    i = 0;
  
     while (1) { 
-        //checkNewMessage(); 
-        received = (char*) OSQPend(queue_pointer, 0, &err); 
-        atoi(received); 
-        OSMemPut(mem_pointer, received); 
-        printEthernet("====================\nNuevo mensaje\n===================="); 
- 
-        OSTimeDlyHMSM(0, 0, 0, 100);
+        OSTimeDlyHMSM(0, 1, 0, 0);
+
+        info.moment = i;
+        insertCircularBuffer(&info);
+        i++;
     }
 }
 
@@ -292,26 +310,7 @@ void showMessagesTask(void *data) {
 ********************************************************************************************************* 
 *                                               TASK #8 
 * 
-* Description: Check every 100ms if there are new messages. 
-********************************************************************************************************* 
-*/ 
- 
-void savePositionTask(void *data) { 
-    char* recived; 
-    char msg[50]; 
- 
-    while (1) { 
- 
- 
-        OSTimeDlyHMSM(0, 0, 2, 0); 
-    }
-}
-
-/* 
-********************************************************************************************************* 
-*                                               TASK #8 
-* 
-* Description: Check every 100ms if there are new messages. 
+* Description: Manage configure state. 
 ********************************************************************************************************* 
 */ 
  

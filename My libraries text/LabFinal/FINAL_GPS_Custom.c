@@ -87,17 +87,40 @@ int GPS_gets( char* p_str ) {
 }
 
 /*** BeginHeader getPosition */
-void getPosition(GPSPosition *position_pointer);
+void getPosition(GPSPosition *position_pointer, char *n_or_s, char *w_or_e);
 /*** EndHeader */
 
-void getPosition(GPSPosition *position_pointer) {
-    char trama[85];
+void getPosition(GPSPosition *position_pointer, char *n_or_s, char *w_or_e) {
+    char trama[85], *position;
 
     while (!GPS_gets(trama)) {
         OSTimeDlyHMSM (0, 0, 0, 100);
     }
 
     gps_get_position(position_pointer, trama);
+
+    // Check if the vertical orientation is N or S and save t print it then
+    position = strstr(n_or_s, "N");
+    if (position != NULL) {
+        n_or_s = position;
+    } else {
+        position = strstr(n_or_s, "S");
+        if (position != NULL) {
+            n_or_s = position;
+        }
+    }
+
+    // Check the horizontal orientation
+    position = strstr(n_or_s, "W");
+    if (position != NULL) {
+        w_or_e = position;
+    } else {
+        position = strstr(n_or_s, "E");
+        if (position != NULL) {
+            w_or_e = position;
+        }
+    }
+
     printf("\n%s\n", trama);
 }
 
@@ -105,17 +128,28 @@ void getPosition(GPSPosition *position_pointer) {
 void generateLinkPosition(char *result);
 /*** EndHeader */
 
-void generateLinkPosition() {
+void generateLinkPosition(char *result) {
     GPSPosition gpsPosition, *gpsPosition_pointer;
     float latitude, longitude;
+    char n_or_s, w_or_e;
+
+    printf("Inicio");
     
     gpsPosition_pointer = &gpsPosition;
 
-    getPosition(gpsPosition_pointer);
+    printf("1");
+
+    getPosition(gpsPosition_pointer, &n_or_s, &w_or_e);
+
+    printf("2");
 
     latitude = gpsPosition.lat_degrees + (float) gpsPosition.lat_minutes/60;
 
+    printf("3");
+
     longitude = gpsPosition.lon_degrees + (float) gpsPosition.lon_minutes/60;
+
+    printf("4");
 
     sprintf(result, "%s%f%c,%f%c", 
         LINK, 
@@ -123,4 +157,6 @@ void generateLinkPosition() {
         gpsPosition.lat_direction, 
         longitude, 
         gpsPosition.lon_direction);
+
+    printf("5");
 }

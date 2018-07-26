@@ -4,7 +4,10 @@
 
 #define GPRS_PWKEY                      4
 #define GPRS_STATUS                     1
-#define MESSAGE_ACCIDENT                "CHOCO EL VEHICULO EN LA SIGUIENTE DIRECCION "
+#define MESSAGE_ACCIDENT                "CHOCO EL VEHICULO"
+#define CHOQUE                          "CHOCO VEHICULO"
+#define POSICION                        "POSICION VEHICULO"
+#define PHONE                           "+598"
 
 /*** EndHeader */
 
@@ -75,90 +78,128 @@ int synchronizeRabbit() {
 }
 
 /*** BeginHeader checkNewMessage */
-int checkNewMessage();
+void checkNewMessage();
 /*** EndHeader */
 
-int checkNewMessage() {
-    char response[256];
+void checkNewMessage() {
+    char celular[9], response[256], *phone_pointer, * mem_block;
     int i;
     
     serDputs("AT+CMGL=\"REC UNREAD\"\r");
+
+    serDrdFlush();
     
-    memset(response,0,256);
+    // Clean response
+    memset(response, 0, 256);
+
+    // Clean celular
+    memset(celular, '\0', 9);
+
+    // Wait for read
     while(!serDread(response, 256, 500));
-    return (strstr(response, "+CMGL:") != NULL);
+
+    if (strstr(response, POSICION) != NULL) {
+
+        phone_pointer = strstr(response, PHONE);
+
+        if (phone_pointer != NULL){
+            getPhoneFromMsg(phone_pointer, celular);
+            if (friendlyPhone(celular)) {
+                mem_block = (char*) OSMemGet(mem_pointer, &err); 
+                strcpy(mem_block, celular); 
+                OSQPost(queue_pointer, mem_block);
+            }
+        }
+    }
 }
 
-/*** BeginHeader send */
-void send(char *phone, char *msg);
+/*** BeginHeader sendMessage */
+void sendMessage(char *phone, char *msg);
 /*** EndHeader */
 
-void send(char *phone, char *msg) {
-    char result[20];                        // AT+CMGS=\"094560289\" = 19 char + end of string
+void sendMessage(char *phone, char *msg) {
+    char result[30], response[35];
+    int i;
+
+    printf("\n-\n");
+
+    printf(phone);
+
+    printf(msg);
+
+    printf("\n-\n");
+
+    serDrdFlush();
 
     sprintf(result, "AT+CMGS=\"");
     strcat(result, phone);
     strcat(result, "\"");
     serDputs(result);
 
+    printf("\n-");
+    printf(result);
+    printf("-\n");
+
     serDputc(0x0D);
+
+    while(!serDread(response, 20, 500));
+
+    printf("\n-\n");
+    printf(response);
+    printf("\n-\n");
 
     serDputs(msg);
 
-    serDputc(0x1A);
-}
+    serDputc(0x1A);    
 
-/*** BeginHeader askPhone */
-void askPhone(char *phone);
-/*** EndHeader */
-
-void askPhone(char *phone) {
-    printEthernet("\nPor favor ingrese un numero de destino (9 digitos): ");
-    CLEAR_BUFFER();
-
-    // Wait for input
-    while(!sock_gets(&socket, phone, 11)) { DELAY100MS(); }
-    
-    CLEAR_SOCKET();
-}
-
-/*** BeginHeader askMsg */
-void askMsg(char *msg);
-/*** EndHeader */
-
-void askMsg(char *msg) {
-    printEthernet("\nPor favor ingrese su mensaje (maximo 15 caracteres): ");
-    CLEAR_BUFFER();
-
-    // Wait for input
-    while(!sock_gets(&socket, msg, 11)) { DELAY100MS(); }
-    
-    CLEAR_SOCKET();
+    while(!serDread(response, 35, 500));
 }
 
 /*** BeginHeader alertAllContacts */
-void alertAllContacts(char *link);
+void alertAllContacts();
 /*** EndHeader */
 
-void alertAllContacts(char *link) {
+void alertAllContacts() {
+    struct Contact contact, *contact_pointer;
+    char result[80];
     int i;
-    char result[50], msg[95];
+    unsigned int addr;
 
-    for (i=0; i<5; i++) {
-        if (contacts[i].array_postion != -1) {
+    contact_pointer = &contact;
 
-            sprintf(result, "AT+CMGS=\"");
-            strcat(result, contacts[i].phone);
-            strcat(result, "\"");
-            serDputs(result);
+    // Initial position to userBlock
+    addr = 0;
 
-            serDputc(0x0D);
+    for (i = 0; i < MAX_NUMBER_CONTACTS; i++){
+        // Get the contact
+        readUserBlock(contact_pointer, addr, BLOCK_SIZE);
 
-            strcat(msg, MESSAGE_ACCIDENT);
-            strcat(msg, link);
-            serDputs(msg);
+        // If not empty, send message
+        if (contact.array_position != -1) {
 
-            serDputc(0x1A);
+            sendMessage(contact.phone, MESSAGE_ACCIDENT);
         }
+
+        // Increase addr to find the next block
+        addr += BLOCK_SIZE;
     }
 }
+
+/*** BeginHeader getPhoneFromMsg */
+void getPhoneFromMsg(char *response, char *result);
+ /*** EndHeader */
+
+void getPhoneFromMsg(char *response, char *result) {
+     int i;
+
+    // First digit allways 0
+    *(result) = '0';
+
+    // First digit allways 9
+    *(result+1) = '9';
+
+    // Get the other 7 digits
+     for (i = 2; i<10; i++) {
+         *(result+i) = *(response+i+3);
+     }
+ }

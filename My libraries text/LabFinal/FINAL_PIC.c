@@ -80,14 +80,3 @@ int getAnalogInput(unsigned char analog_input) {
 
 	return result;
 }
-
-/*** BeginHeader checkSpeed */
-int checkSpeed();
-/*** EndHeader */
-
-int checkSpeed() {
-	if (getAnalogInput(0) > 2050) {
-		return 1;
-	}
-	return 0;
-}
