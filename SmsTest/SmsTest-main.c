@@ -13,6 +13,7 @@ enum bitNumber {
 #define PORT_OUTPUT 1
 #define DINBUFSIZE              255
 #define DOUTBUFSIZE             255
+#define RESPONSE                "CHOCO VEHICULO"
 
 char* getPortShadow(enum portName p_port) {
     switch(p_port){
@@ -47,7 +48,7 @@ void configurePorts(){
 
 	// set pin 4 port E as input (GPRS_PWKEY)
 	BitWrPortI(PEDDR, &PEDDRShadow, PORT_INPUT, 4);
-    
+
 	// serial port C
 	//serCopen(9600);
 
@@ -107,7 +108,7 @@ int synchronizeRabbit() {
     serDputc('A');
     delay(5000);
     serDputs("AT\r");
-    
+
     // Wait for the response
     while(!serDread(response, 8, 500));
 
@@ -123,39 +124,67 @@ int synchronizeRabbit() {
     return 0;
 }
 
-void send(char * data, char * cel) {
+void send(char *phone, char *msg) {
     char result[30], response[35];
-    int i, index;
+    int i;
 
-    index = 0;
+    printf("\n Send\n");
 
     sprintf(result, "AT+CMGS=\"");
-    strcat(result, cel);
+    strcat(result, phone);
     strcat(result, "\"");
+    printf(result);
     serDputs(result);
 
     serDputc(0x0D);
 
     while(!serDread(response, 20, 500));
 
-    serDputs(data);
+    printf(response);
+
+    serDputs(msg);
 
     serDputc(0x1A);
 
     while(!serDread(response, 35, 500));
+
+    printf(response);
+
+    printf("\n Despues Send\n");
 }
 
 void read() {
-    char response[256];
+    char response[256], *msg;
     int i;
-    
+
     serDputs("AT+CMGL=\"REC UNREAD\"\r");
-    //serDputs("AT+CMGDA=\"DEL ALL\"\r");
     serDrdFlush();
     memset(response,0,256);
     while(!serDread(response, 256, 500));
-    
+
+    msg = strstr(response, RESPONSE);
+
+    if (msg != NULL) {
+        printf(msg);
+    } else {
+        printf("Nada\n");
+    }
+
     printf(response);
+
+    serDrdFlush();
+
+    printf("\n\n");
+}
+
+void cleanBox() {
+    char response[256];
+    int i;
+
+    serDputs("AT+CMGDA=\"DEL ALL\"\r");
+    serDrdFlush();
+    memset(response,0,256);
+    while(!serDread(response, 256, 500));
 
     printf("\n\n");
 }
@@ -169,10 +198,11 @@ void main (void) {
     while (1) {
         printf("Mensaje: ");
         while(!getswf(data));
-        //printf("Cel: ");
-        //while(!getswf(cel));
-        //send(data, cel);
+        printf("Cel: ");
+        while(!getswf(cel));
+        //send(cel, data);
         read();
+        //cleanBox();
         delay(100);
     }
 }
